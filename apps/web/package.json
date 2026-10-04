@@ -1,0 +1,50 @@
+{
+  "name": "@moneta/web",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Moneta web app — permissionless futarchy capital formation on Monad",
+  "type": "module",
+  "scripts": {
+    "dev": "next dev --port 3000",
+    "build": "next build",
+    "start": "next start --port 3000",
+    "typecheck": "tsc --noEmit",
+    "lint": "tsc --noEmit",
+    "test": "vitest run",
+    "e2e": "playwright test"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "5.9.1",
+    "@moneta/sdk": "workspace:*",
+    "@rainbow-me/rainbowkit": "2.2.11",
+    "@tanstack/react-query": "5.104.1",
+    "class-variance-authority": "0.7.1",
+    "clsx": "2.1.1",
+    "geist": "1.7.2",
+    "lightweight-charts": "5.2.1",
+    "lucide-react": "1.51.0",
+    "next": "16.3.8",
+    "radix-ui": "1.6.7",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "react-hook-form": "7.89.0",
+    "react-markdown": "10.1.0",
+    "remark-gfm": "4.0.1",
+    "tailwind-merge": "3.7.0",
+    "viem": "2.57.2",
+    "wagmi": "2.19.5",
+    "zod": "4.6.5",
+    "zustand": "5.0.15"
+  },
+  "devDependencies": {
+    "@moneta/config": "workspace:*",
+    "@playwright/test": "1.63.0",
+    "@tailwindcss/postcss": "4.3.3",
+    "@types/node": "24.19.1",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.7",
+    "tailwindcss": "4.3.3",
+    "typescript": "5.9.3",
+    "vitest": "5.0.3"
+  }
+}

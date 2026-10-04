@@ -1,0 +1,17 @@
+{
+  "extends": "@moneta/config/tsconfig.react.json",
+  "compilerOptions": {
+    "plugins": [{ "name": "next" }],
+    "paths": { "@/*": ["./src/*"] },
+    "noUncheckedIndexedAccess": false,
+    "noUnusedLocals": true
+  },
+  "include": [
+    "next-env.d.ts",
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    ".next/types/**/*.ts",
+    "next.config.ts"
+  ],
+  "exclude": ["node_modules", "e2e"]
+}
