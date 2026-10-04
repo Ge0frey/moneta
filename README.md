@@ -90,7 +90,7 @@ To transact from a browser wallet:
 | Bots | `apps/bots/test` | Trader belief math and target sizing |
 | Web | `apps/web/src/**/*.test.ts`, `apps/web/e2e` | Wizard validation mirroring `MonetaFactory._validate`, launch math, governance bounds; Playwright E2E |
 
-CI (`.github/workflows/ci.yml`) runs all of this on every pull request, plus Slither, Aderyn, Gitleaks, `pnpm audit`, `next build`, Docker builds and the integration job (scenario → E2E → parity). The nightly run adds 50k fuzz runs, deep invariants and fork tests.
+There is no CI gate on pull requests or pushes: run these locally before merging. The security checks (Slither, Aderyn, Gitleaks, `pnpm audit`) and their commands are listed in [`docs/security/static-analysis.md`](docs/security/static-analysis.md). For deeper runs: `FOUNDRY_PROFILE=deep forge test --no-match-path 'test/fork/*'` in `packages/contracts` (50k fuzz runs, deep invariants) and `pnpm --filter @moneta/contracts test:fork` (fork tests against Monad testnet).
 
 ## Monad testnet
 

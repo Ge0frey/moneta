@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Browser E2E against a local stack. Used by CI and runnable locally:
+# Browser E2E against a local stack:
 #   bash scripts/e2e.sh            boot what's missing (anvil, deploy, indexer, keeper), build + start the web app
 #                                  with the scripted E2E wallet, fund it, run Playwright
 # The E2E wallet is anvil dev account #9 — a public test key that only ever exists on local chains.

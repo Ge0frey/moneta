@@ -16,7 +16,7 @@ interface IFiatToken {
     function permit(address, address, uint256, uint256, uint8, bytes32, bytes32) external;
 }
 
-/// @notice Nightly: runs against Monad testnet state with REAL Circle USDC.
+/// @notice Runs against Monad testnet state with REAL Circle USDC.
 ///         `forge test --match-path 'test/fork/*' --fork-url $MONAD_TESTNET_RPC_URL`
 contract MonadTestnetForkTest is Test {
     address constant USDC = 0x534b2f3A21130d7a60830c2Df862319e593943A3;

@@ -1,6 +1,6 @@
 # ── Secrets & credentials ────────────────────────────────────────────────────
-# Never commit these, whatever they're called. Real keys live in an encrypted Foundry keystore (deployer),
-# the platform's secret store (bots) or GitHub Environment secrets (CI). Only .env.example is committed.
+# Never commit these, whatever they're called. Real keys live in an encrypted Foundry keystore (deployer)
+# or the platform's secret store (bots). Only .env.example is committed.
 .env
 .env.*
 !.env.example
@@ -30,7 +30,7 @@ docker-compose.override.yml
 playwright/.auth/
 
 # Generated from deployments/*.json by scripts/gen-config.ts. On testnet it embeds MONAD_TESTNET_RPC_URL, which
-# may carry a provider API key, so it's rebuilt locally and in CI instead of being committed.
+# may carry a provider API key, so it's rebuilt locally instead of being committed.
 apps/indexer/config.yaml
 
 # ── Dependencies ─────────────────────────────────────────────────────────────

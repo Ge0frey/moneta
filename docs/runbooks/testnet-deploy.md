@@ -23,7 +23,7 @@ pnpm --filter @moneta/contracts verify:testnet
 
 The deploy script asserts its post-conditions (wiring, allowlist, bounds, owners). With `PROTOCOL_SAFE` set, ownership is offered to the Safe (Ownable2Step). **Accept it from the Safe UI** for both `MonetaFactory` and `MonetaAMM`.
 
-`pnpm deploy:testnet` also regenerates `packages/sdk/src/generated/deployments.ts`. Commit it, or let the deploy workflow open the PR.
+`pnpm deploy:testnet` also regenerates `packages/sdk/src/generated/deployments.ts`. Commit it along with `deployments/10143.json`.
 
 ## 2. Smoke
 
@@ -54,7 +54,7 @@ INDEXER_URL=<graphql url> pnpm --filter @moneta/indexer parity testnet
 
 ## 4. Bots
 
-Run the published image `ghcr.io/<org>/<repo>/bots` (or `docker compose --profile bots up -d bots`) with:
+Build the image with `docker build -f apps/bots/Dockerfile -t moneta-bots .` from the repo root (or `docker compose --profile bots up -d bots`) and run it with:
 
 | Env | Value |
 |---|---|

@@ -1,11 +1,11 @@
 # Static analysis and security checks
 
-The bar is zero High or Medium findings, or each one documented as accepted. This file is that record. CI re-runs every tool on each pull request (`.github/workflows/ci.yml` → `security`).
+The bar is zero High or Medium findings, or each one documented as accepted. This file is that record. Every tool is run locally before merging; there is no CI gate.
 
-| Tool | Command | CI gate |
+| Tool | Command | Pass bar |
 |---|---|---|
 | Slither 0.11.6 | `pnpm --filter @moneta/contracts slither` | Fails on any High |
-| Aderyn 0.6.8 | `pnpm --filter @moneta/contracts aderyn` | Report uploaded as an artifact |
+| Aderyn 0.6.8 | `pnpm --filter @moneta/contracts aderyn` | Report only (`aderyn-report.md`) |
 | Gitleaks 8.30.1 | `docker run … ghcr.io/gitleaks/gitleaks:v8.30.1 git /repo --config /repo/.gitleaks.toml` | Fails on any leak (full history) |
 | pnpm audit | `pnpm audit --prod --audit-level high` | Fails on High |
 
@@ -63,4 +63,3 @@ These patch transitive advisories on the same major lines. Nothing in Moneta cal
 Real keys never touch the repository:
 - deployer → encrypted Foundry keystore
 - bots → platform secret store
-- CI → GitHub Environment secrets
