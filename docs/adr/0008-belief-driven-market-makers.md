@@ -1,0 +1,22 @@
+# ADR 0008: Belief-driven market makers
+
+- **Status:** Accepted
+- **Context:**
+  - Market-maker bots (`apps/bots`) keep decision markets liquid and active on testnet, where organic flow is thin.
+  - The first version bought the favored side with a fixed USDC size every few seconds.
+  - Driving the browser E2E through the UI showed two problems on small testnet-sized markets (~$10 per side):
+    - The PASS price trended upward about 5% per second without limit. That's unrealistic, and it drowns out the price signal the markets exist to produce.
+    - A human trade quoted against the latest block was stale by the next block. It failed even at 3% slippage, because each bot trade moved the price about 5%.
+- **Decision:** traders act as belief-driven market makers.
+  - **Beliefs.**
+    - Each trader values the token in each world as the opening price × (1 ± edge) plus personal Gaussian noise (`noiseBps`).
+    - The edge follows the scenario's probability that the proposal raises value, scaled by `maxEdgeBps`. Milestone tranches lean PASS; obvious value-destroying ideas lean FAIL.
+  - **Trading.**
+    - Each tick a trader picks a world and buys if the pool trades below its belief or sells if above. There is a 0.5% deadband.
+    - Sizing uses the constant-product closed form to *reach* the belief, Q·(√(target/price) − 1) for buys and B·(√(price/target) − 1) for sells. Each trade is capped at `maxPoolShareBps` of the pool (default 1.5%) and at `tradeSize.max`.
+  - **Inventory.** On first sight of a market, each trader buys both worlds equally (market-neutral; the premium is unchanged), so it can sell an overpriced world later.
+  - **Slippage.** Every bot trade carries a 3% minimum-out guard.
+- **Consequences:**
+  - Markets converge to a consensus and oscillate around it. A human pushing a world away from consensus gets arbitraged back, which is how a real decision market behaves, and the verdict follows the scenario.
+  - The web trade panels re-quote against the latest block at submit and offer 0.5 / 1 / 3 / 5% slippage. The E2E uses 5% while bots trade the same market.
+  - Sizing and belief math are pure functions in `apps/bots/src/market.ts`, unit-tested in `apps/bots/test/market.test.ts` (never overshoots the target; caps respected).
