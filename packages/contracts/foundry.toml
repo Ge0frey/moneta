@@ -1,0 +1,67 @@
+[profile.default]
+src = "src"
+out = "out"
+test = "test"
+script = "script"
+libs = ["dependencies"]
+solc_version = "0.8.30"
+evm_version = "prague"          # Monad runs the Pectra EVM
+optimizer = true
+optimizer_runs = 200
+via_ir = false
+bytecode_hash = "none"          # Monad verification guidance: no IPFS metadata hash
+use_literal_content = true      # embed sources in metadata for Sourcify/MonadVision
+auto_detect_remappings = false
+ffi = false
+code_size_limit = 131072        # Monad: 128 KB max contract size (EIP-170 does not apply)
+fs_permissions = [
+  { access = "read-write", path = "./deployments" },
+  { access = "read", path = "./out" },
+  { access = "write", path = "../sdk/test/vectors" },
+]
+gas_reports = ["MonetaFactory", "Raise", "Treasury", "MonetaAMM", "ConditionalVault", "MonetaRouter"]
+
+[profile.default.fuzz]
+runs = 1000
+seed = "0x4d6f6e657461"
+
+[profile.default.invariant]
+runs = 64
+depth = 64
+fail_on_revert = false
+show_metrics = true
+
+[profile.deep.fuzz]
+runs = 50000
+
+[profile.deep.invariant]
+runs = 512
+depth = 128
+
+[fmt]
+line_length = 110
+tab_width = 4
+bracket_spacing = false
+int_types = "long"
+quote_style = "double"
+number_underscore = "thousands"
+sort_imports = true
+
+[rpc_endpoints]
+local = "${LOCAL_RPC_URL}"
+monad_testnet = "${MONAD_TESTNET_RPC_URL}"
+
+[soldeer]
+remappings_generate = true
+remappings_regenerate = false
+remappings_version = false
+remappings_location = "txt"
+recursive_deps = false
+
+[dependencies]
+forge-std = "1.10.0"
+"@openzeppelin-contracts" = "5.6.1"
+"@openzeppelin-contracts-upgradeable" = "5.6.1"
+
+[lint]
+lint_on_build = false

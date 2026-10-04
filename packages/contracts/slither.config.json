@@ -1,0 +1,6 @@
+{
+  "filter_paths": "dependencies|test/|script/|src/local/",
+  "exclude_informational": true,
+  "exclude_optimization": true,
+  "foundry_out_directory": "out"
+}

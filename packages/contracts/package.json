@@ -1,0 +1,23 @@
+{
+  "name": "@moneta/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Moneta protocol contracts (Foundry)",
+  "scripts": {
+    "deps": "forge soldeer install",
+    "build": "forge build --sizes",
+    "test": "forge test",
+    "test:deep": "FOUNDRY_PROFILE=deep forge test",
+    "test:fork": "forge test --match-path 'test/fork/*' --fork-url ${MONAD_TESTNET_RPC_URL:-https://testnet-rpc.monad.xyz}",
+    "gas": "forge snapshot --no-match-path 'test/{fork,invariant}/*' --no-match-test test_writeVectors",
+    "gas:check": "forge snapshot --check --tolerance 5 --no-match-path 'test/{fork,invariant}/*' --no-match-test test_writeVectors",
+    "fmt": "forge fmt",
+    "fmt:check": "forge fmt --check",
+    "lint": "forge fmt --check",
+    "deploy:local": "bash script/deploy.sh local",
+    "deploy:testnet": "bash script/deploy.sh testnet",
+    "verify:testnet": "bash script/verify.sh",
+    "slither": "slither . --config-file slither.config.json --fail-high",
+    "aderyn": "npx -y @cyfrin/aderyn@0.6.8 . --src src --path-excludes src/local -o aderyn-report.md"
+  }
+}
