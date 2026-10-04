@@ -1,0 +1,284 @@
+# Moneta read models (DERIVED state). Everything here is rebuildable from events.
+# The UI reads gates/amounts/verdicts from the chain; the indexer serves lists, history and charts.
+
+type Protocol {
+  id: ID!                     # "moneta"
+  raiseCount: Int!
+  projectCount: Int!
+  failedRaiseCount: Int!
+  totalRaised: BigInt!        # Σ accepted quote of launched raises
+  proposalCount: Int!
+  verdictsPassed: Int!
+  verdictsFailed: Int!
+  redeemedCount: Int!
+  volumeQuote: BigInt!        # Σ quote-side volume across all pools
+  updatedAt: BigInt!
+}
+
+type Founder {
+  id: ID!                     # lowercase address
+  raiseCount: Int!
+  launchedCount: Int!
+  redeemedCount: Int!
+  raises: [Raise!]! @derivedFrom(field: "founder")
+}
+
+type Raise {
+  id: ID!                     # raise address (lowercase)
+  raiseId: BigInt!
+  address: String!
+  founder: Founder!
+  creator: String!
+  quote: String!
+  name: String!
+  symbol: String!
+  price: BigInt!              # quote raw per whole token
+  minRaise: BigInt!
+  maxRaise: BigInt!
+  start: BigInt!
+  end: BigInt!
+  liquidityBps: Int!
+  budgetPerMonth: BigInt!
+  trancheBps: [Int!]!
+  perfMultiples: [Int!]!
+  perfAmounts: [BigInt!]!
+  perfCliff: BigInt!
+  perfUnlockWindow: BigInt!
+  thetaTrancheBps: Int!
+  thetaTeamBps: Int!
+  thetaCommunityBps: Int!
+  proposalLiquidityBps: Int!
+  maxStepBps: Int!
+  warmup: BigInt!
+  duration: BigInt!
+  executionGrace: BigInt!
+  bond: BigInt!
+  memo: String!
+  memoHash: String!
+  status: String!             # OPEN | FAILED | SUCCEEDED
+  aborted: Boolean!
+  totalContributed: BigInt!
+  contributorCount: Int!
+  accepted: BigInt!
+  fee: BigInt!
+  token: String
+  treasury: String
+  project: Project
+  createdAt: BigInt!
+  createdBlock: BigInt!
+  createdTx: String!
+  finalizedAt: BigInt
+  contributions: [Contribution!]! @derivedFrom(field: "raise")
+  contributionEvents: [ContributionEvent!]! @derivedFrom(field: "raise")
+}
+
+type Contribution {
+  id: ID!                     # raise-account
+  raise: Raise!
+  account: String!
+  amount: BigInt!
+  claimed: Boolean!
+  tokensClaimed: BigInt!
+  refundClaimed: BigInt!
+  firstAt: BigInt!
+  lastAt: BigInt!
+}
+
+type ContributionEvent {
+  id: ID!                     # tx-logIndex
+  raise: Raise!
+  account: String!
+  amount: BigInt!
+  totalContributed: BigInt!
+  timestamp: BigInt!
+  txHash: String!
+}
+
+type Project {
+  id: ID!                     # treasury address (lowercase)
+  projectId: BigInt!
+  raise: Raise!
+  treasury: String!
+  token: String!
+  quote: String!
+  name: String!
+  symbol: String!
+  founder: String!
+  state: String!              # ACTIVE | REDEEMED
+  spotPool: Pool
+  launchedAt: BigInt!
+  contributorTokens: BigInt!
+  liquidityTokens: BigInt!
+  liquidityQuote: BigInt!
+  treasuryQuoteAtLaunch: BigInt!
+  budgetPerMonth: BigInt!
+  totalSupply: BigInt!
+  holderCount: Int!
+  proposalCount: Int!
+  activeProposal: Proposal
+  lastPrice: BigInt!          # scaled spot price
+  volumeQuote: BigInt!
+  releasedQuote: BigInt!      # Σ tranches + budget + transfers out
+  redemptionQuote: BigInt
+  redemptionSupply: BigInt
+  proposals: [Proposal!]! @derivedFrom(field: "project")
+  flows: [TreasuryFlow!]! @derivedFrom(field: "project")
+  holders: [Holder!]! @derivedFrom(field: "project")
+}
+
+type Proposal {
+  id: ID!                     # treasury-proposalId
+  project: Project!
+  proposalId: BigInt!
+  proposer: String!
+  isTeam: Boolean!
+  actionType: Int!
+  actionData: String!
+  memo: String!
+  memoHash: String!
+  thetaBps: Int!
+  bond: BigInt!
+  status: String!             # QUEUED | ACTIVE | PASSED | FAILED | EXECUTED | CANCELLED
+  executionFailed: Boolean!
+  executionError: String
+  conditionId: String
+  passPool: Pool
+  failPool: Pool
+  passToken: String
+  failToken: String
+  passQuote: String
+  failQuote: String
+  tradingStart: BigInt
+  tradingEnd: BigInt
+  twapPass: BigInt
+  twapFail: BigInt
+  passed: Boolean
+  createdAt: BigInt!
+  createdTx: String!
+  finalizedAt: BigInt
+  volumeQuote: BigInt!
+  tradeCount: Int!
+  trades: [OutcomeTrade!]! @derivedFrom(field: "proposal")
+}
+
+type Pool {
+  id: ID!                     # poolId
+  poolId: BigInt!
+  kind: String!               # SPOT | PASS | FAIL | OTHER
+  project: Project
+  proposal: Proposal
+  base: String!
+  quote: String!
+  owner: String!
+  feeBps: Int!
+  twapStart: BigInt!
+  twapEnd: BigInt!
+  maxStepPerSecond: BigInt!
+  reserveBase: BigInt!
+  reserveQuote: BigInt!
+  price: BigInt!              # scaled spot
+  observation: BigInt!
+  cumulative: BigInt!
+  lastUpdate: BigInt!
+  closed: Boolean!
+  volumeQuote: BigInt!
+  swapCount: Int!
+  createdAt: BigInt!
+  swaps: [Swap!]! @derivedFrom(field: "pool")
+  points: [PricePoint!]! @derivedFrom(field: "pool")
+  candles: [Candle!]! @derivedFrom(field: "pool")
+}
+
+type Swap {
+  id: ID!                     # tx-logIndex
+  pool: Pool!
+  sender: String!
+  to: String!
+  baseIn: Boolean!
+  amountIn: BigInt!
+  amountOut: BigInt!
+  quoteVolume: BigInt!
+  protocolFee: BigInt!
+  price: BigInt!
+  timestamp: BigInt!
+  block: BigInt!
+  txHash: String!
+}
+
+# Chart series: spot after each swap (SPOT) and lagging observation updates (OBSERVATION)
+type PricePoint {
+  id: ID!                     # tx-logIndex
+  pool: Pool!
+  kind: String!
+  timestamp: BigInt!
+  price: BigInt!
+  observation: BigInt!
+  cumulative: BigInt!
+}
+
+type Candle {
+  id: ID!                     # poolId-bucketStart (60 s buckets)
+  pool: Pool!
+  bucketStart: BigInt!
+  open: BigInt!
+  high: BigInt!
+  low: BigInt!
+  close: BigInt!
+  volumeQuote: BigInt!
+  trades: Int!
+}
+
+type OutcomeTrade {
+  id: ID!                     # tx-logIndex
+  proposal: Proposal!
+  trader: String!
+  side: String!               # PASS | FAIL
+  isBuy: Boolean!
+  amountIn: BigInt!
+  amountOut: BigInt!
+  timestamp: BigInt!
+  txHash: String!
+}
+
+type ConditionalTokenMeta {
+  id: ID!                     # token address (lowercase)
+  conditionId: String!
+  collateral: String!
+  side: String!               # PASS | FAIL
+}
+
+type Position {
+  id: ID!                     # account-token
+  account: String!
+  token: String!
+  conditionId: String!
+  collateral: String!
+  side: String!
+  balance: BigInt!
+}
+
+type Holder {
+  id: ID!                     # project-account
+  project: Project!
+  account: String!
+  balance: BigInt!
+  isProtocol: Boolean!        # AMM / vault / router / treasury / raise escrow (excluded from holderCount)
+}
+
+type TreasuryFlow {
+  id: ID!                     # tx-logIndex
+  project: Project!
+  kind: String!               # LAUNCH | TRANCHE | BUDGET | TRANSFER | BUYBACK | MINT | CALL | BOND_REFUND | REDEMPTION_START | REDEMPTION_CLAIM | PERF_UNLOCK | BUDGET_RATE | FOUNDER
+  amount: BigInt!
+  account: String
+  token: String
+  proposalId: BigInt
+  timestamp: BigInt!
+  txHash: String!
+}
+
+# token address → project (ProjectToken Transfer events carry no project id)
+type TokenLink {
+  id: ID!                     # token address (lowercase)
+  project: Project!
+}

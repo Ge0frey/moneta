@@ -1,0 +1,31 @@
+{
+  "name": "@moneta/indexer",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Moneta event-sourced read models (Envio HyperIndex v3): raises, projects, proposals, pools, candles, positions",
+  "type": "module",
+  "scripts": {
+    "gen-config": "tsx scripts/gen-config.ts",
+    "codegen": "tsx scripts/gen-config.ts ${INDEXER_NETWORK:-local} && envio codegen",
+    "dev": "tsx scripts/gen-config.ts ${INDEXER_NETWORK:-local} && envio dev",
+    "start": "tsx scripts/gen-config.ts ${INDEXER_NETWORK:-testnet} && envio start",
+    "stop": "envio stop",
+    "test": "tsx scripts/gen-config.ts local >/dev/null && envio codegen >/dev/null && vitest run --test-timeout=60000",
+    "typecheck": "tsx scripts/gen-config.ts ${INDEXER_NETWORK:-local} >/dev/null && envio codegen >/dev/null && tsc --noEmit",
+    "parity": "tsx scripts/parity.ts"
+  },
+  "dependencies": {
+    "envio": "3.12.1",
+    "@moneta/sdk": "workspace:*",
+    "viem": "2.57.2"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.1",
+    "tsx": "4.23.15",
+    "typescript": "5.9.3",
+    "vitest": "5.0.3"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}
