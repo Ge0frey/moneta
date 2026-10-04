@@ -1,0 +1,17 @@
+name: Setup Moneta toolchain
+description: pnpm + Node (from .nvmrc) + Foundry, workspace install and Solidity dependencies
+runs:
+  using: composite
+  steps:
+    - uses: pnpm/action-setup@v4
+    - uses: actions/setup-node@v5
+      with:
+        node-version-file: .nvmrc
+        cache: pnpm
+    - uses: foundry-rs/foundry-toolchain@v1
+      with:
+        version: stable
+    - shell: bash
+      run: pnpm install --frozen-lockfile
+    - shell: bash
+      run: pnpm contracts:deps

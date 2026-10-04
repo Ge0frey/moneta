@@ -1,0 +1,90 @@
+# Moneta infrastructure.
+#   docker compose --profile local up anvil            a local chain (alternative to `pnpm dev:chain`)
+#   docker compose up -d postgres hasura indexer       self-hosted indexer (fallback to Envio Cloud)
+#   docker compose --profile bots up -d bots           keeper + traders + watcher
+# Local development normally uses `pnpm dev` (envio dev manages its own Postgres/Hasura containers).
+# Ports default away from envio dev's (5433/8080) so both can run side by side.
+name: moneta
+
+services:
+  anvil:
+    profiles: ["local"]
+    image: ghcr.io/foundry-rs/foundry:stable
+    entrypoint:
+      [
+        "anvil",
+        "--host",
+        "0.0.0.0",
+        "--chain-id",
+        "31337",
+        "--block-time",
+        "1",
+        "--code-size-limit",
+        "131072",
+      ]
+    ports: ["${ANVIL_PORT:-8545}:8545"]
+
+  postgres:
+    image: postgres:18.3
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${ENVIO_PG_PASSWORD:-moneta-local}
+      POSTGRES_DB: moneta
+    volumes: ["pg-data:/var/lib/postgresql"]
+    ports: ["${PG_PORT:-5434}:5432"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d moneta"]
+      interval: 3s
+      retries: 20
+
+  hasura:
+    image: hasura/graphql-engine:v2.43.0
+    depends_on:
+      postgres: { condition: service_healthy }
+    environment:
+      HASURA_GRAPHQL_DATABASE_URL: postgres://postgres:${ENVIO_PG_PASSWORD:-moneta-local}@postgres:5432/moneta
+      HASURA_GRAPHQL_ADMIN_SECRET: ${HASURA_ADMIN_SECRET:-moneta-local}
+      HASURA_GRAPHQL_UNAUTHORIZED_ROLE: public
+      HASURA_GRAPHQL_STRINGIFY_NUMERIC_TYPES: "true"
+      HASURA_GRAPHQL_ENABLE_CONSOLE: "false"
+      HASURA_GRAPHQL_NO_OF_RETRIES: "10"
+    ports: ["${HASURA_PORT:-8081}:8080"]
+    healthcheck:
+      test: ["CMD-SHELL", "timeout 2 bash -c '</dev/tcp/127.0.0.1/8080'"]
+      interval: 3s
+      retries: 40
+
+  indexer:
+    build: { context: ., dockerfile: apps/indexer/Dockerfile }
+    depends_on:
+      postgres: { condition: service_healthy }
+      hasura: { condition: service_healthy }
+    environment:
+      INDEXER_NETWORK: ${INDEXER_NETWORK:-testnet}
+      LOCAL_RPC_URL: ${INDEXER_LOCAL_RPC_URL:-http://host.docker.internal:8545}
+      ENVIO_API_TOKEN: ${ENVIO_API_TOKEN:-}
+      ENVIO_PG_HOST: postgres
+      ENVIO_PG_PORT: "5432"
+      ENVIO_PG_USER: postgres
+      ENVIO_PG_PASSWORD: ${ENVIO_PG_PASSWORD:-moneta-local}
+      ENVIO_PG_DATABASE: moneta
+      HASURA_GRAPHQL_ENDPOINT: http://hasura:8080/v1/metadata
+      HASURA_GRAPHQL_ADMIN_SECRET: ${HASURA_ADMIN_SECRET:-moneta-local}
+    extra_hosts: ["host.docker.internal:host-gateway"]
+    restart: unless-stopped
+
+  bots:
+    profiles: ["bots"]
+    build: { context: ., dockerfile: apps/bots/Dockerfile }
+    command: ["all", "--network", "${BOTS_NETWORK:-testnet}"]
+    environment:
+      RPC_URL: ${RPC_URL:-https://testnet-rpc.monad.xyz}
+      INDEXER_URL: http://hasura:8080/v1/graphql
+      KEEPER_KEY: ${KEEPER_KEY:-}
+      TRADER_MNEMONIC: ${TRADER_MNEMONIC:-}
+      ALERT_WEBHOOK_URL: ${ALERT_WEBHOOK_URL:-}
+    extra_hosts: ["host.docker.internal:host-gateway"]
+    restart: unless-stopped
+
+volumes:
+  pg-data:

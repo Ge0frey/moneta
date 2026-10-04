@@ -1,0 +1,53 @@
+{
+  "name": "moneta",
+  "private": true,
+  "description": "Moneta \u2014 permissionless futarchy capital formation on Monad",
+  "packageManager": "pnpm@10.30.2",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "bash scripts/dev.sh",
+    "dev:chain": "anvil --chain-id 31337 --block-time 1 --host 0.0.0.0 --code-size-limit 131072",
+    "dev:indexer": "pnpm --filter @moneta/indexer dev",
+    "dev:web": "pnpm --filter @moneta/web dev",
+    "dev:bots": "pnpm --filter @moneta/bots dev",
+    "contracts:deps": "pnpm --filter @moneta/contracts deps",
+    "contracts:build": "pnpm --filter @moneta/contracts build",
+    "deploy:local": "pnpm --filter @moneta/contracts deploy:local && pnpm --filter @moneta/sdk generate",
+    "deploy:testnet": "pnpm --filter @moneta/contracts deploy:testnet && pnpm --filter @moneta/sdk generate",
+    "seed:local": "pnpm --filter @moneta/bots seed --network local",
+    "seed:testnet": "pnpm --filter @moneta/bots seed --network testnet",
+    "scenario": "pnpm --filter @moneta/bots scenario",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "format": "prettier --write \"**/*.{ts,tsx,js,mjs,json,md,css,yml,yaml}\" --ignore-path .prettierignore",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,mjs,json,css,yml,yaml}\" --ignore-path .prettierignore"
+  },
+  "devDependencies": {
+    "prettier": "3.9.9",
+    "turbo": "2.11.7",
+    "typescript": "5.9.3"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "sharp",
+      "envio",
+      "rescript",
+      "@sentry/cli",
+      "protobufjs",
+      "bufferutil",
+      "utf-8-validate",
+      "keccak",
+      "secp256k1"
+    ],
+    "overrides": {
+      "body-parser@<1.20.3": "^1.20.3",
+      "path-to-regexp@<0.1.13": "^0.1.13",
+      "ws@>=8.0.0 <8.21.0": "^8.21.0"
+    }
+  }
+}

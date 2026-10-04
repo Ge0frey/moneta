@@ -1,0 +1,12 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule: { interval: weekly }
+    open-pull-requests-limit: 10
+    groups:
+      web3: { patterns: ["viem", "wagmi", "@wagmi/*", "@rainbow-me/*"] }
+      next: { patterns: ["next", "react", "react-dom"] }
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: weekly }

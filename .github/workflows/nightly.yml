@@ -1,0 +1,52 @@
+# Deep testing every night: 50k fuzz runs, deep invariants, fork tests against live Monad testnet.
+name: Nightly
+
+on:
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deep:
+    name: Deep fuzz + invariants
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup
+      - working-directory: packages/contracts
+        run: FOUNDRY_PROFILE=deep forge test --no-match-path 'test/fork/*'
+
+  fork:
+    name: Fork tests (Monad testnet, Circle USDC)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup
+      - working-directory: packages/contracts
+        env:
+          MONAD_TESTNET_RPC_URL: ${{ secrets.MONAD_TESTNET_RPC_URL || 'https://testnet-rpc.monad.xyz' }}
+        run: pnpm test:fork
+
+  testnet-smoke:
+    name: Testnet read-only health (deployment live, indexer parity)
+    if: ${{ vars.TESTNET_INDEXER_URL != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup
+      - name: Bots check (deployment + wiring, no transactions)
+        run: pnpm --filter @moneta/bots exec tsx src/index.ts check --network testnet
+        env:
+          RPC_URL: ${{ secrets.MONAD_TESTNET_RPC_URL || 'https://testnet-rpc.monad.xyz' }}
+          INDEXER_URL: ${{ vars.TESTNET_INDEXER_URL }}
+      - name: Indexer ⇄ chain parity
+        run: pnpm --filter @moneta/indexer parity testnet
+        env:
+          MONAD_TESTNET_RPC_URL: ${{ secrets.MONAD_TESTNET_RPC_URL || 'https://testnet-rpc.monad.xyz' }}
+          INDEXER_URL: ${{ vars.TESTNET_INDEXER_URL }}
