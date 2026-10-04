@@ -1,0 +1,30 @@
+{
+  "name": "@moneta/bots",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Moneta automation: keeper (finalize/crank/retry), market makers, watcher (invariants & alerts), seed, scenario runner",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx src/index.ts all",
+    "keeper": "tsx src/index.ts keeper",
+    "traders": "tsx src/index.ts traders",
+    "watcher": "tsx src/index.ts watcher",
+    "seed": "tsx src/index.ts seed",
+    "scenario": "tsx src/index.ts scenario",
+    "fund": "tsx src/index.ts fund",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@moneta/sdk": "workspace:*",
+    "viem": "2.57.2"
+  },
+  "devDependencies": {
+    "@moneta/config": "workspace:*",
+    "@types/node": "24.19.1",
+    "tsx": "4.23.15",
+    "typescript": "5.9.3",
+    "vitest": "5.0.3"
+  }
+}

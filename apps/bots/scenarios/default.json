@@ -1,0 +1,37 @@
+{
+  "rules": [
+    {
+      "match": "celebrity",
+      "bias": "fail",
+      "strength": 0.92
+    },
+    {
+      "match": "endorsement",
+      "bias": "fail",
+      "strength": 0.9
+    },
+    {
+      "actionType": "TrancheRelease",
+      "bias": "pass",
+      "strength": 0.8
+    },
+    {
+      "actionType": "Redeem",
+      "bias": "fail",
+      "strength": 0.7
+    },
+    {
+      "actionType": "Buyback",
+      "bias": "pass",
+      "strength": 0.65
+    }
+  ],
+  "tradeSize": {
+    "min": 0.05,
+    "max": 3
+  },
+  "tradeProbability": 0.5,
+  "maxPoolShareBps": 150,
+  "maxEdgeBps": 1500,
+  "noiseBps": 150
+}
