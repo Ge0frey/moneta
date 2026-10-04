@@ -1,0 +1,27 @@
+# Secret scanning. Extends gitleaks' default rules.
+title = "moneta"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Build output, vendored dependencies, and anvil's publicly documented dev keys (local chain only)"
+paths = [
+  '''(^|/)node_modules/''',
+  '''(^|/)\.next/''',
+  '''(^|/)\.envio/''',
+  '''(^|/)\.dev/''',
+  '''packages/contracts/(out|cache|dependencies|broadcast)/''',
+  '''(^|/)(test-results|playwright-report)/''',
+  '''pnpm-lock\.yaml''',
+  '''packages/contracts/script/multicall3\.runtime\.hex''',
+]
+regexes = [
+  # 20-byte EVM addresses are public identifiers, never secrets (e.g. "projectTokenImpl": "0x…")
+  '''^0x[0-9a-fA-F]{40}$''',
+  # anvil / hardhat default accounts #0, #1, #2 and #9 — public test keys from `anvil` itself
+  '''0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80''',
+  '''0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d''',
+  '''0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a''',
+  '''0x2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6''',
+]

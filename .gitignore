@@ -1,0 +1,72 @@
+# ── Secrets & credentials ────────────────────────────────────────────────────
+# Never commit these, whatever they're called. Real keys live in an encrypted Foundry keystore (deployer),
+# the platform's secret store (bots) or GitHub Environment secrets (CI). Only .env.example is committed.
+.env
+.env.*
+!.env.example
+.envrc
+*.keystore
+keystore/
+keystores/
+secrets/
+.secrets
+*.secret
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+id_rsa*
+id_ecdsa*
+id_ed25519*
+.netrc
+.npmrc
+.yarnrc.yml
+.sentryclirc
+credentials.json
+service-account*.json
+docker-compose.override.yml
+.claude/settings.local.json
+playwright/.auth/
+
+# Generated from deployments/*.json by scripts/gen-config.ts. On testnet it embeds MONAD_TESTNET_RPC_URL, which
+# may carry a provider API key, so it's rebuilt locally and in CI instead of being committed.
+apps/indexer/config.yaml
+
+# ── Dependencies ─────────────────────────────────────────────────────────────
+node_modules/
+.pnpm-store/
+
+# ── Build output & caches ────────────────────────────────────────────────────
+dist/
+.next/
+out/
+.turbo/
+coverage/
+*.tsbuildinfo
+
+# Foundry: cache/ holds forge's "sensitive values" (RPC URLs) from script runs; broadcast/ holds raw tx logs and
+# dry runs. deployments/*.json is the committed source of truth for addresses.
+packages/contracts/out/
+packages/contracts/cache/
+packages/contracts/broadcast/
+packages/contracts/dependencies/
+packages/contracts/crytic-export/
+packages/contracts/aderyn-report.md
+
+# Envio
+apps/indexer/generated/
+apps/indexer/.envio/
+apps/indexer/build/
+
+# Playwright
+playwright-report/
+test-results/
+blob-report/
+
+# ── Local stack, editors, OS ─────────────────────────────────────────────────
+.dev/
+*.log
+.vercel
+.DS_Store
+.idea/
