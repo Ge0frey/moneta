@@ -8,7 +8,8 @@ import { indexer } from "@/lib/env";
 export function useProtocolStats() {
   return useQuery({
     queryKey: ["idx", "protocol"],
-    queryFn: () => indexer.protocol(),
+    // No Protocol row until the first raise; react-query treats `undefined` data as an error.
+    queryFn: async () => (await indexer.protocol()) ?? null,
     refetchInterval: 5_000,
   });
 }

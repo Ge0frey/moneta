@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Browser E2E against a local stack:
+# Browser E2E against a local stack (never testnet: the web build below is pinned to chain 31337):
 #   bash scripts/e2e.sh            boot what's missing (anvil, deploy, indexer, keeper), build + start the web app
 #                                  with the scripted E2E wallet, fund it, run Playwright
 # The E2E wallet is anvil dev account #9 — a public test key that only ever exists on local chains.
@@ -50,7 +50,10 @@ cast send "$QUOTE" "mint(address,uint256)" "$E2E_ADDR" 1000000000 --private-key 
 echo "✓ E2E wallet $E2E_ADDR funded with 1,000 MonetaUSDC"
 
 if [ -z "${E2E_BASE_URL:-}" ]; then
-  (cd apps/web && NEXT_PUBLIC_E2E_KEY=$E2E_KEY pnpm --silent exec next build && NEXT_PUBLIC_E2E_KEY=$E2E_KEY pnpm --silent exec next start --port "$PORT") >"$LOGS/web-e2e.log" 2>&1 &
+  # The app targets Monad testnet (root .env); this build is pinned to the local stack instead, and the scripted
+  # wallet only exists on the local chain.
+  export NEXT_PUBLIC_CHAIN_ID=31337 NEXT_PUBLIC_RPC_URLS="$RPC" NEXT_PUBLIC_INDEXER_URL="$GQL" NEXT_PUBLIC_E2E_KEY="$E2E_KEY"
+  (cd apps/web && pnpm --silent exec next build && pnpm --silent exec next start --port "$PORT") >"$LOGS/web-e2e.log" 2>&1 &
   PIDS+=($!)
   wait_for "web on :$PORT" 600 curl -sf -o /dev/null "http://localhost:$PORT/docs"
   export E2E_BASE_URL="http://localhost:$PORT"

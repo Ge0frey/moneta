@@ -8,8 +8,10 @@
   },
   "scripts": {
     "dev": "bash scripts/dev.sh",
+    "dev:local": "bash scripts/dev.sh --local",
     "dev:chain": "anvil --chain-id 31337 --block-time 1 --host 0.0.0.0 --code-size-limit 131072",
     "dev:indexer": "pnpm --filter @moneta/indexer dev",
+    "dev:indexer:testnet": "INDEXER_NETWORK=testnet docker compose up -d --build postgres hasura indexer",
     "dev:web": "pnpm --filter @moneta/web dev",
     "dev:bots": "pnpm --filter @moneta/bots dev",
     "contracts:deps": "pnpm --filter @moneta/contracts deps",
