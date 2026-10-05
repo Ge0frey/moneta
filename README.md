@@ -88,7 +88,7 @@ The local stack is idempotent: it detects a running chain, deployment, seed and 
 | `pnpm typecheck` · `pnpm lint` · `pnpm format:check` | Static checks |
 | `pnpm scenario --network local` | Headless full lifecycle through the SDK, with on-chain assertions |
 | `bash scripts/e2e.sh` | Browser E2E: builds the web app with a scripted E2E wallet and runs Playwright through the full user journey |
-| `pnpm --filter @moneta/indexer parity local` | Indexer ⇄ chain field-by-field parity |
+| `pnpm --filter @moneta/sdk parity local` | Indexer ⇄ chain field-by-field parity |
 | `pnpm --filter @moneta/contracts gas:check` | Gas budgets (Monad charges the gas *limit*) |
 | `pnpm --filter @moneta/contracts slither` / `aderyn` | Static analysis |
 
@@ -98,7 +98,7 @@ The local stack is idempotent: it detects a running chain, deployment, seed and 
 |---|---|---|
 | Contracts | `packages/contracts/test` | Unit, fuzz, stateful invariants (vault solvency, AMM backing, router holds nothing), lifecycle scenarios, adversarial (end-of-window pumps, dust spam, reentrant targets), gas budgets, fork tests against Monad testnet |
 | SDK | `packages/sdk/test` | Bit-exact parity with forge-generated vectors (CPMath, lagging oracle), action codec, error decoding |
-| Indexer | `apps/indexer/test` | Handlers on simulated events (Envio test indexer), plus the parity script against a live chain |
+| Indexer | `apps/indexer/test`, `packages/sdk/scripts/indexer-parity.ts` | Handlers on simulated events (Envio test indexer), plus the parity script against a live chain |
 | Bots | `apps/bots/test` | Trader belief math and target sizing |
 | Web | `apps/web/src/**/*.test.ts`, `apps/web/e2e` | Wizard validation mirroring `MonetaFactory._validate`, launch math, governance bounds; Playwright E2E |
 

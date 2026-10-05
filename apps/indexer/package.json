@@ -11,12 +11,10 @@
     "start": "tsx scripts/gen-config.ts ${INDEXER_NETWORK:-testnet} && envio start",
     "stop": "envio stop",
     "test": "tsx scripts/gen-config.ts local >/dev/null && envio codegen >/dev/null && vitest run --test-timeout=60000",
-    "typecheck": "tsx scripts/gen-config.ts ${INDEXER_NETWORK:-local} >/dev/null && envio codegen >/dev/null && tsc --noEmit",
-    "parity": "tsx scripts/parity.ts"
+    "typecheck": "tsx scripts/gen-config.ts ${INDEXER_NETWORK:-local} >/dev/null && envio codegen >/dev/null && tsc --noEmit"
   },
   "dependencies": {
     "envio": "3.12.1",
-    "@moneta/sdk": "workspace:*",
     "viem": "2.57.2"
   },
   "devDependencies": {
