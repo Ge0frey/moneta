@@ -34,6 +34,28 @@ function clean(data: ChartPoint[]) {
     .map(([time, value]) => ({ time: time as UTCTimestamp, value }));
 }
 
+/**
+ * lightweight-charts renders every timestamp as UTC, so shift chain times to the viewer's wall clock (the library's
+ * documented `timeToLocal` recipe) to match the local times shown everywhere else. Re-cleaned because a DST
+ * fall-back maps two seconds onto one.
+ */
+function toLocalChartTime(data: ChartPoint[]) {
+  return clean(
+    data.map(({ time, value }) => {
+      const d = new Date(time * 1000);
+      const local = Date.UTC(
+        d.getFullYear(),
+        d.getMonth(),
+        d.getDate(),
+        d.getHours(),
+        d.getMinutes(),
+        d.getSeconds(),
+      );
+      return { time: local / 1000, value };
+    }),
+  );
+}
+
 /** Price chart (TradingView lightweight-charts), themed from Moneta tokens. */
 export function PriceChart({
   series,
@@ -119,7 +141,7 @@ export function PriceChart({
         });
         handles.current.set(s.id, h);
       }
-      h.setData(clean(s.data));
+      h.setData(toLocalChartTime(s.data));
     }
     for (const [id, h] of handles.current) {
       if (!seen.has(id)) {
