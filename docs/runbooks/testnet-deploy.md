@@ -43,8 +43,10 @@ pnpm --filter @moneta/bots exec tsx src/index.ts scenario --network testnet # fu
 **Self-hosted:**
 
 ```bash
-INDEXER_NETWORK=testnet ENVIO_API_TOKEN=… docker compose up -d postgres hasura indexer   # GraphQL on :8081
+pnpm dev:indexer:testnet    # docker compose up -d --build postgres hasura indexer; GraphQL on :8081
 ```
+
+With `ENVIO_API_TOKEN` set, it syncs through HyperSync. Without it, it syncs over `MONAD_TESTNET_RPC_URL`, in 100-block `eth_getLogs` ranges (the public RPC's cap). `pnpm dev` starts the indexer and then the web app.
 
 Check parity once it's synced:
 

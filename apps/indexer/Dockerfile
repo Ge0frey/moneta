@@ -2,6 +2,8 @@
 # Postgres + Hasura come from docker-compose.yml. Build from the repo root:
 #   docker build -f apps/indexer/Dockerfile -t moneta-indexer .
 FROM node:24-bookworm-slim
+# Envio's native RPC/HyperSync clients verify TLS against the system CA store, which the slim image lacks.
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && rm -rf /var/lib/apt/lists/*
 ENV CI=1
 RUN corepack enable
 WORKDIR /repo
@@ -18,7 +20,7 @@ COPY packages/sdk packages/sdk
 COPY packages/contracts/deployments packages/contracts/deployments
 COPY apps/indexer apps/indexer
 WORKDIR /repo/apps/indexer
-# INDEXER_NETWORK=testnet (HyperSync, needs ENVIO_API_TOKEN) or local (LOCAL_RPC_URL)
+# INDEXER_NETWORK=testnet (HyperSync with ENVIO_API_TOKEN, else the Monad RPC) or local (LOCAL_RPC_URL)
 ENV INDEXER_NETWORK=testnet
 RUN chown -R node:node /repo/apps/indexer
 USER node

@@ -35,7 +35,9 @@ docs/           ADRs, security triage, runbooks
 
 Dependencies flow one way: `contracts → sdk → {web, bots, indexer}`. The SDK is the only bridge.
 
-## Quickstart (local)
+## Quickstart
+
+The web app runs on **Monad testnet** against the deployed contracts. The local chain (anvil) is only for automated tests and bot or indexer development, and it has no UI.
 
 **Requirements:**
 - Node 24 (`nvm use`)
@@ -45,33 +47,43 @@ Dependencies flow one way: `contracts → sdk → {web, bots, indexer}`. The SDK
 
 ```bash
 pnpm install
-cp .env.example .env        # local defaults work as-is; no secrets needed
-pnpm dev                    # anvil → deploy → seed → indexer → bots → web
+cp .env.example .env        # defaults work as-is; no secrets needed
+pnpm dev                    # testnet indexer (Docker, :8081) → web app on Monad testnet
 ```
 
-Open <http://localhost:3000>. `pnpm dev` is idempotent: it detects a running chain, deployment, seed and indexer and reuses them.
-- `pnpm dev -- --fresh` restarts from genesis.
-- `pnpm dev -- --no-bots` skips the bots.
-- Logs go to `.dev/*.log`.
+Open <http://localhost:3000>. `pnpm dev` checks that the testnet deployment (`packages/contracts/deployments/10143.json`) is live, then reuses or starts the indexer and the web app. The first indexer start builds a Docker image, which takes a few minutes.
 
-To transact from a browser wallet:
-1. Add the network `http://127.0.0.1:8545` (chain 31337).
-2. Import an anvil dev key, e.g. account #0 `0xac09…ff80`.
-3. Mint MonetaUSDC to yourself (its mint is open on local chains): `cast send $(jq -r .quote packages/contracts/deployments/31337.json) "mint(address,uint256)" <you> 1000000000 --private-key <any anvil key>`.
+To transact, add **Monad Testnet** to your wallet (chain 10143, RPC `https://testnet-rpc.monad.xyz`). Then fund it with MON from [faucet.monad.xyz](https://faucet.monad.xyz) and USDC from [faucet.circle.com](https://faucet.circle.com) (Monad Testnet).
 
 | Service | URL |
 |---|---|
 | Web app | http://localhost:3000 |
-| GraphQL (Hasura) | http://localhost:8080/v1/graphql |
-| Chain (anvil) | http://127.0.0.1:8545 · chain id 31337 · 1 s blocks |
+| GraphQL, testnet (Hasura) | http://localhost:8081/v1/graphql |
+| Chain | Monad testnet · chain id 10143 · 300 ms blocks |
+
+### Local test stack
+
+```bash
+pnpm dev:local              # anvil → deploy → seed → indexer → bots (no web UI)
+```
+
+The local stack is idempotent: it detects a running chain, deployment, seed and indexer and reuses them.
+- `pnpm dev:local -- --fresh` restarts from genesis.
+- `pnpm dev:local -- --no-bots` skips the bots.
+- It serves GraphQL on http://localhost:8080/v1/graphql and the chain on http://127.0.0.1:8545 (chain id 31337, 1 s blocks).
+- Logs go to `.dev/*.log`.
+
+`bash scripts/e2e.sh` boots whatever it needs from this stack and builds its own copy of the web app, pinned to the local chain.
 
 ## Commands
 
 | Command | What it does |
 |---|---|
-| `pnpm dev` | Full local stack (see above) |
-| `pnpm dev:chain` / `deploy:local` / `seed:local` | Individual stack steps |
-| `pnpm dev:web` / `dev:indexer` / `dev:bots` | Run one service |
+| `pnpm dev` | The app on Monad testnet: testnet indexer + web (see above) |
+| `pnpm dev:local` | Local test stack, no UI: anvil → deploy → seed → indexer → bots |
+| `pnpm dev:indexer:testnet` | Testnet indexer only (Docker Compose, :8081) |
+| `pnpm dev:chain` / `deploy:local` / `seed:local` | Individual local stack steps |
+| `pnpm dev:web` / `dev:indexer` / `dev:bots` | Run one service (web uses `.env` → testnet; indexer and bots default to local) |
 | `pnpm test` | Every unit suite: forge (unit, fuzz 1k, invariant, scenario, adversarial), SDK parity, indexer handlers, bots, web |
 | `pnpm typecheck` · `pnpm lint` · `pnpm format:check` | Static checks |
 | `pnpm scenario --network local` | Headless full lifecycle through the SDK, with on-chain assertions |
@@ -110,7 +122,7 @@ pnpm --filter @moneta/contracts verify:testnet         # MonadVision (Sourcify) 
 pnpm --filter @moneta/bots exec tsx src/index.ts check --network testnet
 ```
 
-Then point the web app at it (`NEXT_PUBLIC_CHAIN_ID=10143`). Run the indexer on Envio Cloud, or self-host it with `docker compose up -d postgres hasura indexer` (`INDEXER_NETWORK=testnet`, `ENVIO_API_TOKEN`). Run the bots from the published image with `KEEPER_KEY` / `TRADER_MNEMONIC` set in your platform's secret store. The full checklist is in [`docs/runbooks/testnet-deploy.md`](docs/runbooks/testnet-deploy.md).
+The web app already targets testnet (`NEXT_PUBLIC_CHAIN_ID=10143`), and `pnpm dev` self-hosts the indexer with Docker Compose. Without `ENVIO_API_TOKEN`, it syncs over the RPC; with the token, it uses HyperSync. Envio Cloud is the hosted alternative. Run the bots from the published image with `KEEPER_KEY` / `TRADER_MNEMONIC` set in your platform's secret store. The full checklist is in [`docs/runbooks/testnet-deploy.md`](docs/runbooks/testnet-deploy.md).
 
 ## Security model
 
