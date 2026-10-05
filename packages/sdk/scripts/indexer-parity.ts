@@ -1,6 +1,6 @@
 /**
  * Indexer ⇄ chain parity: every indexed raise, project and proposal must match chain view results
- * field by field. Exits non-zero on any mismatch. Usage: tsx scripts/parity.ts [local|testnet]
+ * field by field. Exits non-zero on any mismatch. Usage: pnpm --filter @moneta/sdk parity [local|testnet]
  */
 import {
   big,
@@ -12,7 +12,7 @@ import {
   readProject,
   readProposal,
   readRaise,
-} from "@moneta/sdk";
+} from "../src/index";
 import { createPublicClient, http, type Address } from "viem";
 
 const network = process.argv[2] ?? "local";
@@ -40,9 +40,11 @@ function eq(label: string, indexed: unknown, onchain: unknown) {
     failures.push(`${label}: indexer=${indexed} chain=${onchain}`);
 }
 
-const meta = await idx.meta();
+// Wait for the indexer to reach the current head (Monad makes a block every ~300 ms, so it is rarely exactly there).
 const head = await client.getBlockNumber();
-if (!meta || meta.progressBlock < Number(head) - 5) {
+const caughtUp = await idx.waitForBlock(head, 60_000);
+const meta = await idx.meta();
+if (!caughtUp || !meta) {
   console.error(`indexer not caught up (progress ${meta?.progressBlock} vs head ${head})`);
   process.exit(1);
 }

@@ -166,7 +166,7 @@ cat <<EOF
   Chain      $RPC (31337)
   Logs       .dev/{anvil,indexer,bots}.log
 
-  Use it for: bash scripts/e2e.sh · pnpm --filter @moneta/indexer parity local · bot development.
+  Use it for: bash scripts/e2e.sh · pnpm --filter @moneta/sdk parity local · bot development.
   Ctrl-C to stop.
 EOF
 wait

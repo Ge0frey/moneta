@@ -14,6 +14,7 @@
   "scripts": {
     "generate": "wagmi generate && tsx scripts/sync-deployments.ts",
     "vectors": "cd ../contracts && forge test --match-contract VectorsTest -q",
+    "parity": "tsx scripts/indexer-parity.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit"

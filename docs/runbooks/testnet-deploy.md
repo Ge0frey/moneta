@@ -34,11 +34,14 @@ pnpm --filter @moneta/bots exec tsx src/index.ts scenario --network testnet # fu
 
 ## 3. Indexer
 
-**Envio Cloud (preferred):**
-1. Connect the repo.
-2. Set the indexer directory to `apps/indexer`.
-3. Set the build command to `pnpm gen-config testnet && pnpm codegen`.
-4. Add `ENVIO_API_TOKEN`.
+**Envio Cloud (preferred):** it uploads only `apps/indexer`, so the indexer is self-contained there. Its config is the committed `config.cloud.yaml` (HyperSync), and the ABIs are copied into `abis/`.
+1. Connect the repo with Indexer Directory `apps/indexer`, Config File `config.cloud.yaml` (relative to the Indexer Directory) and Git Release Branch `envio`. Keep public visibility on, because the browser app queries the endpoint without credentials.
+2. Under Settings → Environment Variables, add `ENVIO_API_TOKEN`. The docs don't say whether Envio Cloud supplies HyperSync access itself, so set it to be safe.
+3. Deploy with `git push origin main:envio`. Each push to `envio` creates a new deployment, which re-indexes from the start block. An indexer can hold only 3 deployments. Once it has 3, a push doesn't deploy: delete an old deployment, then deploy the commit from **Recent Commits**.
+4. After a contract redeploy, run `pnpm --filter @moneta/indexer gen-config cloud`, commit `config.cloud.yaml` and `abis/`, and push to `envio`.
+5. Set the web app's `NEXT_PUBLIC_INDEXER_URL` to the indexer's static production endpoint if the dashboard shows one. Otherwise use the deployment's endpoint (`npx envio-cloud deployment endpoint moneta <commit> <org>`), which changes with every deployment. After pushing a new deployment, **Promote to Production** routes the static endpoint to it.
+
+On the free Development plan, Envio deletes a deployment after 30 days or above 20 GB. It also starts deletion (7 days of grace, then 3 days read-only) after 100k events, 5 GB, or 7 days with no queries. Query rate limits depend on the plan. If the app gets HTTP 429s, reduce the polling in `apps/web/src/lib/hooks/indexed.ts` or upgrade.
 
 **Self-hosted:**
 
@@ -51,7 +54,7 @@ With `ENVIO_API_TOKEN` set, it syncs through HyperSync. Without it, it syncs ove
 Check parity once it's synced:
 
 ```bash
-INDEXER_URL=<graphql url> pnpm --filter @moneta/indexer parity testnet
+INDEXER_URL=<graphql url> pnpm --filter @moneta/sdk parity testnet
 ```
 
 ## 4. Bots

@@ -50,9 +50,6 @@ importers:
 
   apps/indexer:
     dependencies:
-      '@moneta/sdk':
-        specifier: workspace:*
-        version: link:../../packages/sdk
       envio:
         specifier: 3.12.1
         version: 3.12.1(@types/react@19.2.18)(bufferutil@4.1.0)(react-dom@19.3.0(react@19.2.5))(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@4.6.5)
