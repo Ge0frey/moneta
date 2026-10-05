@@ -119,7 +119,7 @@ export function useMonetaTx() {
         onSuccess?.(receipt);
         if (indexerSync) {
           void indexer
-            .waitForBlock(receipt.blockNumber, 10_000)
+            .waitForBlock(receipt.blockNumber, 10_000, 1_000)
             .then(() => queryClient.invalidateQueries({ queryKey: ["idx"] }));
         }
         return receipt;

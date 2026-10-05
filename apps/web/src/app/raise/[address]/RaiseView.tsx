@@ -33,6 +33,7 @@ import { StatusChip, Tag } from "@/components/ui/pills";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/states";
 import { indexer, IS_TESTNET } from "@/lib/env";
 import { useChainNow, useRaiseState } from "@/lib/hooks/chain";
+import { INDEXER_POLL_MS } from "@/lib/hooks/indexed";
 import { useMonetaTx } from "@/lib/hooks/tx";
 
 export function RaiseView({ address }: { address: Address }) {
@@ -41,7 +42,7 @@ export function RaiseView({ address }: { address: Address }) {
   const indexed = useQuery({
     queryKey: ["idx", "raise", address],
     queryFn: () => indexer.raise(address),
-    refetchInterval: 5_000,
+    refetchInterval: INDEXER_POLL_MS,
   });
   const founder = useQuery({
     queryKey: ["idx", "founder", indexed.data?.founder_id],

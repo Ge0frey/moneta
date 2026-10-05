@@ -39,7 +39,7 @@ pnpm --filter @moneta/bots exec tsx src/index.ts scenario --network testnet # fu
 2. Under Settings → Environment Variables, add `ENVIO_API_TOKEN`. The docs don't say whether Envio Cloud supplies HyperSync access itself, so set it to be safe.
 3. Deploy with `git push origin main:envio`. Each push to `envio` creates a new deployment, which re-indexes from the start block. An indexer can hold only 3 deployments. Once it has 3, a push doesn't deploy: delete an old deployment, then deploy the commit from **Recent Commits**.
 4. After a contract redeploy, run `pnpm --filter @moneta/indexer gen-config cloud`, commit `config.cloud.yaml` and `abis/`, and push to `envio`.
-5. Set the web app's `NEXT_PUBLIC_INDEXER_URL` to the indexer's static production endpoint if the dashboard shows one. Otherwise use the deployment's endpoint (`npx envio-cloud deployment endpoint moneta <commit> <org>`), which changes with every deployment. After pushing a new deployment, **Promote to Production** routes the static endpoint to it.
+5. Set the web app's `NEXT_PUBLIC_INDEXER_URL` to the deployment's endpoint (`https://indexer.dev.hyperindex.xyz/<id>/v1/graphql`, shown on the deployment page). The Development plan has no static production endpoint, because Promote to Production is paid-only. So **every new deployment has a new URL**: update the Cloudflare build variable, rebuild the web app, then delete the old deployment.
 
 On the free Development plan, Envio deletes a deployment after 30 days or above 20 GB. It also starts deletion (7 days of grace, then 3 days read-only) after 100k events, 5 GB, or 7 days with no queries. Query rate limits depend on the plan. If the app gets HTTP 429s, reduce the polling in `apps/web/src/lib/hooks/indexed.ts` or upgrade.
 

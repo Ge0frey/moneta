@@ -29,6 +29,7 @@ import { Chip, Eyebrow, StatusChip } from "@/components/ui/pills";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/states";
 import { indexer, requireDeployment } from "@/lib/env";
 import { useBalances } from "@/lib/hooks/chain";
+import { INDEXER_POLL_MS } from "@/lib/hooks/indexed";
 import { useMounted } from "@/lib/hooks/mounted";
 import { useMonetaTx } from "@/lib/hooks/tx";
 
@@ -58,7 +59,7 @@ export function PortfolioView() {
     queryKey: ["idx", "portfolio", account],
     enabled: !!account,
     queryFn: () => indexer.portfolio(account!),
-    refetchInterval: 6_000,
+    refetchInterval: INDEXER_POLL_MS,
   });
 
   const setTab = (t: Tab) => {

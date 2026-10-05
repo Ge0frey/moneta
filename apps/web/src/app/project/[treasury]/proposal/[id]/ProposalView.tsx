@@ -37,6 +37,7 @@ import { StatusChip, Tag } from "@/components/ui/pills";
 import { ErrorState, Skeleton } from "@/components/ui/states";
 import { indexer } from "@/lib/env";
 import { useChainNow, useProjectState, useProposalState } from "@/lib/hooks/chain";
+import { INDEXER_POLL_MS } from "@/lib/hooks/indexed";
 import { useMonetaTx } from "@/lib/hooks/tx";
 import { MarketPanel, PositionsPanel, TradePanel, TradesPanel } from "./trade";
 
@@ -83,19 +84,19 @@ export function ProposalView({ treasury, id }: { treasury: Address; id: bigint }
   const indexed = useQuery({
     queryKey: ["idx", "proposal", treasury, id.toString()],
     queryFn: () => indexer.proposal(treasury, id),
-    refetchInterval: 3_000,
+    refetchInterval: INDEXER_POLL_MS,
   });
   const passPts = useQuery({
     queryKey: ["idx", "points", chain.data?.proposal.passPoolId.toString()],
     enabled: !!chain.data?.passPool,
     queryFn: () => indexer.pricePoints(chain.data!.proposal.passPoolId),
-    refetchInterval: 3_000,
+    refetchInterval: INDEXER_POLL_MS,
   });
   const failPts = useQuery({
     queryKey: ["idx", "points", chain.data?.proposal.failPoolId.toString()],
     enabled: !!chain.data?.failPool,
     queryFn: () => indexer.pricePoints(chain.data!.proposal.failPoolId),
-    refetchInterval: 3_000,
+    refetchInterval: INDEXER_POLL_MS,
   });
 
   if (project.isError || chain.isError)

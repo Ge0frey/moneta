@@ -28,6 +28,7 @@ import { StatusChip, Tag } from "@/components/ui/pills";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/states";
 import { indexer } from "@/lib/env";
 import { useChainNow, useProjectState } from "@/lib/hooks/chain";
+import { INDEXER_POLL_MS } from "@/lib/hooks/indexed";
 import { FounderPanel, RedemptionPanel, SwapPanel } from "./panels";
 
 const PROPOSAL_TONE = {
@@ -44,18 +45,18 @@ export function ProjectView({ treasury }: { treasury: Address }) {
   const indexed = useQuery({
     queryKey: ["idx", "project", treasury],
     queryFn: () => indexer.project(treasury),
-    refetchInterval: 5_000,
+    refetchInterval: INDEXER_POLL_MS,
   });
   const proposals = useQuery({
     queryKey: ["idx", "proposals", treasury],
     queryFn: () => indexer.proposals(treasury),
-    refetchInterval: 4_000,
+    refetchInterval: INDEXER_POLL_MS,
   });
   const points = useQuery({
     queryKey: ["idx", "points", chain.data?.spotPoolId.toString()],
     enabled: !!chain.data,
     queryFn: () => indexer.pricePoints(chain.data!.spotPoolId),
-    refetchInterval: 5_000,
+    refetchInterval: INDEXER_POLL_MS,
   });
 
   if (chain.isError)
