@@ -68,16 +68,30 @@ Build the image with `docker build -f apps/bots/Dockerfile -t moneta-bots .` fro
 
 Command: `all --network testnet` (or `keeper --network testnet` for staging).
 
-## 5. Web (Vercel)
+## 5. Web (Cloudflare Workers)
 
-| Env | Value |
+The app runs as a Worker, built by OpenNext (`apps/web/wrangler.jsonc`, `apps/web/open-next.config.ts`). Connect the repo under **Workers & Pages → Create → Import a repository**:
+
+| Setting | Value |
 |---|---|
-| `NEXT_PUBLIC_CHAIN_ID` | `10143` |
-| `NEXT_PUBLIC_RPC_URLS` | Keyed, domain-restricted RPC first, then `https://testnet-rpc.monad.xyz` |
-| `NEXT_PUBLIC_INDEXER_URL` | Indexer GraphQL URL |
-| `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` | Reown project id |
+| Project name | `moneta` (must match `name` in `apps/web/wrangler.jsonc`) |
+| Path (root directory) | `/` (the pnpm workspace and lockfile live at the root) |
+| Build command | `pnpm install --frozen-lockfile --filter "@moneta/web..." && pnpm --filter @moneta/web build:cf` |
+| Deploy command | `pnpm --filter @moneta/web deploy:cf` |
+| Preview command (optional) | `pnpm --filter @moneta/web upload:cf` |
 
-Set the root directory to `apps/web`, keep the framework preset on Next.js, and leave the install command as the default (pnpm workspace).
+These are **build** variables (Settings → Build → Variables and secrets), because `NEXT_PUBLIC_*` values are inlined at build time:
+
+| Variable | Value |
+|---|---|
+| `SKIP_DEPENDENCY_INSTALL` | `true` (the build command installs only the web app's dependencies) |
+| `PNPM_VERSION` | `10.30.2` |
+| `NEXT_PUBLIC_INDEXER_URL` | The indexer's **public HTTPS** GraphQL URL. A browser can't reach `localhost` |
+| `NEXT_PUBLIC_CHAIN_ID` | `10143` (also the default) |
+| `NEXT_PUBLIC_RPC_URLS` | Optional: a keyed, domain-restricted RPC first. Defaults to the public testnet RPCs |
+| `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` | Optional: Reown project id, which enables WalletConnect/mobile wallets |
+
+To check a build locally, run `pnpm --filter @moneta/web preview:cf`, which serves the Worker in `workerd` on :8787. The Worker is about 2.2 MiB gzipped, under the free plan's 3 MiB limit.
 
 ## 6. Open the first raise
 
