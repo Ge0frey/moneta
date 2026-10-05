@@ -44,8 +44,7 @@
       "bufferutil",
       "utf-8-validate",
       "keccak",
-      "secp256k1",
-      "workerd"
+      "secp256k1"
     ],
     "overrides": {
       "body-parser@<1.20.3": "^1.20.3",

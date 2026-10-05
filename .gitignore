@@ -68,9 +68,5 @@ blob-report/
 .dev/
 *.log
 .vercel
-# Cloudflare (OpenNext build output, wrangler state, local secrets)
-.open-next/
-.wrangler/
-.dev.vars*
 .DS_Store
 .idea/

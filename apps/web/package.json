@@ -8,10 +8,6 @@
     "dev": "next dev --port 3000",
     "build": "next build",
     "start": "next start --port 3000",
-    "build:cf": "opennextjs-cloudflare build",
-    "preview:cf": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
-    "deploy:cf": "opennextjs-cloudflare deploy",
-    "upload:cf": "opennextjs-cloudflare upload",
     "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit",
     "test": "vitest run",
@@ -20,7 +16,6 @@
   "dependencies": {
     "@hookform/resolvers": "5.9.1",
     "@moneta/sdk": "workspace:*",
-    "@opennextjs/cloudflare": "1.20.8",
     "@rainbow-me/rainbowkit": "2.2.11",
     "@tanstack/react-query": "5.104.1",
     "class-variance-authority": "0.7.1",
@@ -50,7 +45,6 @@
     "@types/react-dom": "19.2.7",
     "tailwindcss": "4.3.3",
     "typescript": "5.9.3",
-    "vitest": "5.0.3",
-    "wrangler": "4.147.0"
+    "vitest": "5.0.3"
   }
 }

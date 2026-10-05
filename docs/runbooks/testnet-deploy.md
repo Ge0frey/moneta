@@ -39,7 +39,7 @@ pnpm --filter @moneta/bots exec tsx src/index.ts scenario --network testnet # fu
 2. Under Settings → Environment Variables, add `ENVIO_API_TOKEN`. The docs don't say whether Envio Cloud supplies HyperSync access itself, so set it to be safe.
 3. Deploy with `git push origin main:envio`. Each push to `envio` creates a new deployment, which re-indexes from the start block. An indexer can hold only 3 deployments. Once it has 3, a push doesn't deploy: delete an old deployment, then deploy the commit from **Recent Commits**.
 4. After a contract redeploy, run `pnpm --filter @moneta/indexer gen-config cloud`, commit `config.cloud.yaml` and `abis/`, and push to `envio`.
-5. Set the web app's `NEXT_PUBLIC_INDEXER_URL` to the deployment's endpoint (`https://indexer.dev.hyperindex.xyz/<id>/v1/graphql`, shown on the deployment page). The Development plan has no static production endpoint, because Promote to Production is paid-only. So **every new deployment has a new URL**: update the Cloudflare build variable, rebuild the web app, then delete the old deployment.
+5. Set the web app's `NEXT_PUBLIC_INDEXER_URL` to the deployment's endpoint (`https://indexer.dev.hyperindex.xyz/<id>/v1/graphql`, shown on the deployment page). The Development plan has no static production endpoint, because Promote to Production is paid-only. So **every new deployment has a new URL**: update the Vercel environment variable, redeploy the web app, then delete the old deployment.
 
 On the free Development plan, Envio deletes a deployment after 30 days or above 20 GB. It also starts deletion (7 days of grace, then 3 days read-only) after 100k events, 5 GB, or 7 days with no queries. Query rate limits depend on the plan. If the app gets HTTP 429s, reduce the polling in `apps/web/src/lib/hooks/indexed.ts` or upgrade.
 
@@ -71,30 +71,32 @@ Build the image with `docker build -f apps/bots/Dockerfile -t moneta-bots .` fro
 
 Command: `all --network testnet` (or `keeper --network testnet` for staging).
 
-## 5. Web (Cloudflare Workers)
+## 5. Web (Vercel)
 
-The app runs as a Worker, built by OpenNext (`apps/web/wrangler.jsonc`, `apps/web/open-next.config.ts`). Connect the repo under **Workers & Pages → Create → Import a repository**:
+The Vercel project `moneta` deploys `apps/web` from GitHub on every push to `main`. Set it up from the repo root:
+
+```bash
+vercel link --yes --project moneta
+vercel project update moneta --root-directory apps/web --framework nextjs --node-version 24.x
+vercel git connect
+```
 
 | Setting | Value |
 |---|---|
-| Project name | `moneta` (must match `name` in `apps/web/wrangler.jsonc`) |
-| Path (root directory) | `/` (the pnpm workspace and lockfile live at the root) |
-| Build command | `pnpm install --frozen-lockfile --filter "@moneta/web..." && pnpm --filter @moneta/web build:cf` |
-| Deploy command | `pnpm --filter @moneta/web deploy:cf` |
-| Preview command (optional) | `pnpm --filter @moneta/web upload:cf` |
+| Root Directory | `apps/web` |
+| Framework | Next.js |
+| Install / Build command | Defaults. Vercel detects pnpm from the root lockfile and installs the workspace. Don't override the install command, because an override makes Vercel use its oldest pnpm |
 
-These are **build** variables (Settings → Build → Variables and secrets), because `NEXT_PUBLIC_*` values are inlined at build time:
+Set these environment variables for Production and Preview (`vercel env add <NAME> production`). `NEXT_PUBLIC_*` values are inlined at build time, so redeploy after changing them:
 
 | Variable | Value |
 |---|---|
-| `SKIP_DEPENDENCY_INSTALL` | `true` (the build command installs only the web app's dependencies) |
-| `PNPM_VERSION` | `10.30.2` |
-| `NEXT_PUBLIC_INDEXER_URL` | The indexer's **public HTTPS** GraphQL URL. A browser can't reach `localhost` |
+| `NEXT_PUBLIC_INDEXER_URL` | The Envio deployment endpoint. It changes with every Envio deployment (see step 3) |
 | `NEXT_PUBLIC_CHAIN_ID` | `10143` (also the default) |
 | `NEXT_PUBLIC_RPC_URLS` | Optional: a keyed, domain-restricted RPC first. Defaults to the public testnet RPCs |
 | `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` | Optional: Reown project id, which enables WalletConnect/mobile wallets |
 
-To check a build locally, run `pnpm --filter @moneta/web preview:cf`, which serves the Worker in `workerd` on :8787. The Worker is about 2.2 MiB gzipped, under the free plan's 3 MiB limit.
+Prefer Git deploys. `vercel deploy` uploads the local working tree, and `.vercelignore` keeps `.env` and local artifacts out of that upload.
 
 ## 6. Open the first raise
 

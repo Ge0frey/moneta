@@ -1,0 +1,20 @@
+# `vercel deploy` uploads the local working tree and skips only Vercel's fixed list (it does not read .gitignore),
+# so keep secrets and local artifacts out explicitly. Everything here is gitignored, so Git deploys are unaffected.
+.env
+.env.*
+!.env.example
+.dev/
+*.log
+keystore/
+keystores/
+*.keystore
+packages/contracts/broadcast/
+packages/contracts/cache/
+packages/contracts/out/
+packages/contracts/dependencies/
+apps/indexer/generated/
+apps/indexer/.envio/
+apps/indexer/config.yaml
+test-results/
+playwright-report/
+.turbo/
