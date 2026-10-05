@@ -12,7 +12,8 @@ import {
 import { createConfig, fallback, http } from "wagmi";
 import { mock as scriptedWallet } from "wagmi/connectors";
 import { privateKeyToAccount } from "viem/accounts";
-import { CHAIN, RPC_URLS, WALLETCONNECT_PROJECT_ID } from "./env";
+import { localAnvil } from "@moneta/sdk";
+import { CHAIN, CHAIN_ID, RPC_URLS, WALLETCONNECT_PROJECT_ID } from "./env";
 
 /**
  * wagmi config. RPC: fallback chain (keyed provider first, then public), multicall batching via Multicall3
@@ -32,8 +33,14 @@ const rainbowConnectors = connectorsForWallets([{ groupName: "Wallets", wallets:
   projectId: WALLETCONNECT_PROJECT_ID || "moneta-injected-only",
 });
 
-/** E2E only (NEXT_PUBLIC_E2E_KEY set): a scripted wallet driven by an anvil dev key. */
-const e2eKey = process.env.NEXT_PUBLIC_E2E_KEY as `0x${string}` | undefined;
+/**
+ * E2E only (NEXT_PUBLIC_E2E_KEY set): a scripted wallet driven by an anvil dev key. That key is public, so the
+ * scripted wallet is only ever enabled on the local chain.
+ */
+const e2eKey =
+  CHAIN_ID === localAnvil.id
+    ? (process.env.NEXT_PUBLIC_E2E_KEY as `0x${string}` | undefined)
+    : undefined;
 export const E2E_MODE = !!e2eKey;
 export { scriptedWallet };
 const e2eConnectors = e2eKey

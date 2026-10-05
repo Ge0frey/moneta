@@ -17,12 +17,18 @@ const deployment = JSON.parse(
 
 const abi = (name: string) => `../../packages/sdk/abi-json/${name}.json`;
 // Testnet: HyperSync when ENVIO_API_TOKEN is set (first-class Monad support, no RPC limits on backfill);
-// otherwise plain RPC, which is fine for a fresh deployment's short block range.
+// otherwise plain RPC, which is fine for a fresh deployment's short block range. Monad testnet is a HyperSync
+// chain, so a bare `rpc: <url>` would only be a fallback (and HyperSync refuses to run without a token):
+// the RPC must be marked `for: sync` to become the data source. Monad's RPC caps eth_getLogs at 100 blocks.
 const source =
   network === "testnet"
     ? process.env.ENVIO_API_TOKEN
       ? `    # HyperSync (first-class Monad testnet support) — no RPC limits on backfill`
-      : `    rpc: ${process.env.MONAD_TESTNET_RPC_URL || "https://testnet-rpc.monad.xyz"}`
+      : `    rpc:
+      url: ${process.env.MONAD_TESTNET_RPC_URL || "https://testnet-rpc.monad.xyz"}
+      for: sync
+      initial_block_interval: 100
+      interval_ceiling: 100`
     : `    rpc: ${process.env.LOCAL_RPC_URL ?? "http://127.0.0.1:8545"}`;
 
 const yaml = `# yaml-language-server: $schema=./node_modules/envio/evm.schema.json
