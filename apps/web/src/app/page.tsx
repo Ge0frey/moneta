@@ -1,54 +1,40 @@
 import { Frame, Section } from "@/components/layout/Frame";
 import { Hero } from "@/components/landing/Hero";
-import { LiveOnMoneta, LiveStats, ValuePill } from "@/components/landing/Live";
-import {
-  Bento,
-  BuiltWith,
-  ClosingCard,
-  CtaCard,
-  DecisionMarketsFeature,
-  HowItWorks,
-  Roadmap,
-  UseMoneta,
-} from "@/components/landing/Static";
+import { HowItWorks } from "@/components/landing/HowItWorks";
+import { Ledger } from "@/components/landing/Live";
+import { Origin } from "@/components/landing/Origin";
+import { BuiltWith, ClosingCard, Roadmap } from "@/components/landing/Static";
+import { Verdict } from "@/components/landing/Verdict";
 
-/** Landing page — narrative frame (1000px, 4 columns). */
+/**
+ * Landing page — narrative frame (1000px, 4 columns), read as numbered plates:
+ * I hero · II how it works · III decision markets · (built on Monad) · IV roadmap · V ledger ·
+ * VI origin · build with us.
+ */
 export default function Landing() {
   return (
     <div className="overflow-x-clip">
       <Frame variant="narrative">
         <Hero />
-        <Section ticks={false} className="pt-0 lg:pt-0">
-          <div className="flex flex-col gap-4">
-            <DecisionMarketsFeature />
-            <Bento />
-          </div>
-        </Section>
-        <Section>
+        <Section mark="cross">
           <HowItWorks />
         </Section>
-        <Section>
+        <Section mark="cross">
+          <Verdict />
+        </Section>
+        <Section mark="cross">
           <BuiltWith />
         </Section>
-        <Section>
+        <Section mark="cross">
           <Roadmap />
         </Section>
-        <Section>
-          <ValuePill />
+        <Section mark="cross">
+          <Ledger />
         </Section>
-        <Section>
-          <UseMoneta />
+        <Section mark="cross">
+          <Origin />
         </Section>
-        <Section>
-          <CtaCard />
-        </Section>
-        <Section>
-          <LiveStats />
-        </Section>
-        <Section>
-          <LiveOnMoneta />
-        </Section>
-        <Section>
+        <Section mark="cross">
           <ClosingCard />
         </Section>
       </Frame>

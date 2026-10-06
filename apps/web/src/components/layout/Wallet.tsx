@@ -4,7 +4,7 @@ import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { shortAddress } from "@moneta/sdk";
 import { Button } from "@/components/ui/button";
 
-/** Wallet button: violet when disconnected, address chip when connected. */
+/** Wallet button: white pill when disconnected, address chip when connected. */
 export function WalletButton({ block }: { block?: boolean }) {
   return (
     <ConnectButton.Custom>
@@ -14,7 +14,7 @@ export function WalletButton({ block }: { block?: boolean }) {
         if (!account) {
           return (
             <Button
-              variant="accent"
+              variant="primary"
               size="sm"
               onClick={openConnectModal}
               className={block ? "w-full" : undefined}
@@ -43,7 +43,7 @@ export function WalletButton({ block }: { block?: boolean }) {
           >
             <span
               aria-hidden
-              className="size-5 rounded-full bg-[conic-gradient(from_180deg,#2b2b2b,#9d8cff,#2b2b2b)]"
+              className="size-5 rounded-full bg-[conic-gradient(from_180deg,#2b2b2b,#fafafa,#2b2b2b)]"
             />
             {account.ensName ?? shortAddress(account.address)}
           </button>

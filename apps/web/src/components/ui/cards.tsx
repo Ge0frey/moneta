@@ -33,29 +33,6 @@ export function StatTile({
   );
 }
 
-/** Bento card: title top-left, mono body bottom-left. */
-export function BentoCard({
-  title,
-  body,
-  className,
-}: {
-  title: ReactNode;
-  body: ReactNode;
-  className?: string;
-}) {
-  return (
-    <div
-      className={cn(
-        "flex min-h-[168px] flex-col justify-between gap-10 rounded-[16px] border border-line-subtle bg-surface-1 p-6",
-        className,
-      )}
-    >
-      <h3 className="heading-sm max-w-[14ch]">{title}</h3>
-      <p className="mono-sm max-w-[48ch] text-fg">{body}</p>
-    </div>
-  );
-}
-
 /** Project card (Explore + landing carousel). Chain-authoritative values live on the detail pages. */
 export function ProjectCard({ l, className }: { l: Listing; className?: string }) {
   const meta = STATUS_META[l.status];

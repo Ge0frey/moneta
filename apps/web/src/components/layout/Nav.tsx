@@ -78,7 +78,7 @@ function SearchBox() {
         type="search"
         autoComplete="off"
         placeholder="Raises, tokens, addresses"
-        className="h-8 w-[260px] rounded-[8px] border border-line bg-surface-1 pr-9 pl-8 body-sm text-fg placeholder:text-fg-muted focus:border-accent focus:outline-none"
+        className="h-8 w-[260px] rounded-[8px] border border-line bg-surface-1 pr-9 pl-8 body-sm text-fg placeholder:text-fg-muted focus:border-line-contrast focus:outline-none"
       />
       <kbd className="pointer-events-none absolute top-1/2 right-2 -translate-y-1/2 rounded-[4px] border border-line px-1.5 mono-xs text-fg-3">
         /
