@@ -67,17 +67,47 @@ export function Ticks({ className }: { className?: string }) {
   );
 }
 
+/** Registration crosshairs centred on the frame lines at a boundary (landing). */
+export function Crosshairs({ className }: { className?: string }) {
+  const marks: { left: string; cls?: string }[] = [
+    { left: "0px" },
+    { left: "50%", cls: "hidden md:block" },
+    { left: "calc(100% - 1px)" },
+  ];
+  return (
+    <div
+      aria-hidden="true"
+      className={cn("pointer-events-none absolute inset-x-0 top-0 h-px", className)}
+    >
+      {marks.map((m) => (
+        <span
+          key={m.left}
+          style={{ left: m.left }}
+          className={cn(
+            "absolute top-0 size-[13px] -translate-x-[6px] -translate-y-[6px]",
+            "before:absolute before:top-[6px] before:left-0 before:h-px before:w-full before:bg-tick",
+            "after:absolute after:top-0 after:left-[6px] after:h-full after:w-px after:bg-tick",
+            m.cls,
+          )}
+        />
+      ))}
+    </div>
+  );
+}
+
 /** A frame section: generous vertical rhythm with ticks at its top boundary (landing: 192px between sections). */
 export function Section({
   children,
   className,
   ticks = true,
+  mark = "tick",
   id,
   dense,
 }: {
   children: ReactNode;
   className?: string;
   ticks?: boolean;
+  mark?: "tick" | "cross";
   id?: string;
   dense?: boolean;
 }) {
@@ -86,7 +116,7 @@ export function Section({
       id={id}
       className={cn("relative", dense ? "py-8 lg:py-12" : "py-20 lg:py-24", className)}
     >
-      {ticks && <Ticks />}
+      {ticks && (mark === "cross" ? <Crosshairs /> : <Ticks />)}
       {children}
     </section>
   );

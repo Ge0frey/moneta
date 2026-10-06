@@ -9,14 +9,14 @@ import { Toaster } from "@/components/tx/Toaster";
 import { E2E_MODE, scriptedWallet, wagmiConfig } from "@/lib/wagmi";
 
 const base = darkTheme({
-  accentColor: "#9d8cff",
+  accentColor: "#fafafa",
   accentColorForeground: "#000000",
   borderRadius: "large",
   fontStack: "system",
   overlayBlur: "small",
 });
 
-/** RainbowKit themed from Moneta tokens (black canvas, charcoal surfaces, violet accent). */
+/** RainbowKit themed from Moneta tokens (black canvas, charcoal surfaces, white accent). */
 const monetaTheme: Theme = {
   ...base,
   colors: {

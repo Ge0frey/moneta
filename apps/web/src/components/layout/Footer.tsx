@@ -94,7 +94,7 @@ export function HelpButton() {
     <Link
       href="/docs"
       aria-label="Help and docs"
-      className="fixed right-4 bottom-4 z-40 grid size-10 place-items-center rounded-full border border-accent/30 bg-accent-subtle text-accent transition-colors hover:text-accent-hover sm:right-6 sm:bottom-6"
+      className="fixed right-4 bottom-4 z-40 grid size-10 place-items-center rounded-full border border-line bg-surface-1 text-fg-2 transition-colors hover:border-line-strong hover:text-fg sm:right-6 sm:bottom-6"
     >
       <CircleHelp className="size-5" aria-hidden />
     </Link>

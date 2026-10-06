@@ -3,74 +3,84 @@
 import { big, formatUsd } from "@moneta/sdk";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
-import { useMemo, useRef, useState } from "react";
-import { MonetaMark } from "@/components/art/MonetaMark";
+import { useMemo, useRef, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
-import { ProjectCard, StatTile } from "@/components/ui/cards";
+import { ProjectCard } from "@/components/ui/cards";
 import { Chip, LiveDot } from "@/components/ui/pills";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/states";
 import { useProjects, useProtocolStats, useRaises } from "@/lib/hooks/indexed";
 import { buildListings, STATUS_META, type ListingStatus } from "@/lib/listing";
+import { cn } from "@/lib/cn";
+import { SectionHead } from "./SectionHead";
 
-/* ── 8. Value pill: Capital, Settled In USDC ───────────────────────────────── */
-export function ValuePill() {
-  const { data, isLoading } = useProtocolStats();
+/* ── Figures: one hairline row, one figure per frame column ────────────────── */
+function Figure({
+  label,
+  value,
+  sub,
+  className,
+}: {
+  label: string;
+  value: ReactNode;
+  sub: ReactNode;
+  className?: string;
+}) {
   return (
-    <div className="flex flex-col gap-6">
-      <h2 className="heading-xl">Capital, Settled In USDC</h2>
-      <p className="body max-w-[56ch] text-fg">
-        Every raise is denominated in USDC on Monad. Total accepted across all launched Moneta
-        raises:
-      </p>
-      <div className="flex h-24 items-center gap-4 rounded-full border border-line bg-canvas pr-3 pl-3 sm:gap-6 sm:pr-5">
-        <span className="grid size-14 shrink-0 place-items-center rounded-full bg-surface-3">
-          <MonetaMark className="size-6" title="" />
-        </span>
-        <span className="figure-xl min-w-0 truncate">
-          {isLoading ? <Skeleton className="h-10 w-40" /> : formatUsd(big(data?.totalRaised), 6)}
-        </span>
-        <span className="mono-xs ml-1 hidden items-center gap-1.5 text-fg-3 sm:inline-flex">
-          <LiveDot tone="accent" /> live
-        </span>
-        <Button asChild variant="tertiary" className="ml-auto">
-          <Link href="/explore">Back a Raise</Link>
-        </Button>
+    <div
+      className={cn(
+        "flex min-h-[148px] flex-col justify-between gap-6 border-line py-6 lg:min-h-[176px]",
+        className,
+      )}
+    >
+      <p className="label-mono text-fg-3">{label}</p>
+      <div>
+        <div className="figure-xl">{value}</div>
+        <p className="mono-xs mt-2 text-fg-3">{sub}</p>
       </div>
     </div>
   );
 }
 
-/* ── 11. Live stats ────────────────────────────────────────────────────────── */
-export function LiveStats() {
+function Figures() {
   const { data, isLoading, isError, refetch } = useProtocolStats();
   if (isError) return <ErrorState body="The indexer is unreachable." onRetry={() => refetch()} />;
-  const v = (x: React.ReactNode) => (isLoading ? <Skeleton className="h-10 w-24" /> : x);
+  const v = (x: ReactNode) => (isLoading ? <Skeleton className="h-10 w-24" /> : x);
+  const passed = data?.verdictsPassed ?? 0;
+  const failed = data?.verdictsFailed ?? 0;
   return (
-    <div className="grid gap-4 sm:grid-cols-2">
-      <StatTile
-        label="Total Raised"
+    <div className="grid grid-cols-2 border-y border-line lg:grid-cols-4">
+      <Figure
+        className="border-b pr-4 sm:pr-6 lg:border-b-0"
+        label="Total raised"
         value={v(formatUsd(big(data?.totalRaised), 6, { compact: true }))}
-        sub="USDC accepted by launched raises"
+        sub="USDC accepted at launch"
       />
-      <StatTile
-        label="Treasuries Governed"
+      <Figure
+        className="border-b pl-4 sm:px-6 lg:border-b-0"
+        label="Treasuries governed"
         value={v(data?.projectCount ?? 0)}
         sub={`${data?.redeemedCount ?? 0} redeemed at NAV`}
       />
-      <StatTile
-        label="Verdicts Reached"
-        value={v((data?.verdictsPassed ?? 0) + (data?.verdictsFailed ?? 0))}
-        sub={`▲ ${data?.verdictsPassed ?? 0} PASS · ▼ ${data?.verdictsFailed ?? 0} FAIL`}
+      <Figure
+        className="pr-4 sm:pr-6 lg:px-6"
+        label="Verdicts reached"
+        value={v(passed + failed)}
+        sub={`▲ ${passed} PASS · ▼ ${failed} FAIL`}
       />
-      <StatTile label="Block Time" value="300 ms" sub="Monad · ~600 ms finality" />
+      <Figure
+        className="pl-4 sm:px-6"
+        label="Block time"
+        value="300 ms"
+        sub="Monad · ~600 ms finality"
+      />
     </div>
   );
 }
 
-/* ── 12. Live On Moneta: filters + carousel ────────────────────────────────── */
+/* ── Listings: filters + carousel ──────────────────────────────────────────── */
 const FILTERS: ("all" | ListingStatus)[] = ["all", "raising", "governing", "verdict", "redeemed"];
 
-export function LiveOnMoneta() {
+function Listings() {
   const raises = useRaises();
   const projects = useProjects();
   const [filter, setFilter] = useState<(typeof FILTERS)[number]>("all");
@@ -88,8 +98,7 @@ export function LiveOnMoneta() {
   };
 
   return (
-    <div className="flex flex-col gap-8">
-      <h2 className="heading-xl">Live On Moneta</h2>
+    <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="-ml-1 flex gap-2 overflow-x-auto" role="group" aria-label="Filter projects">
           {FILTERS.map((f) => (
@@ -113,6 +122,7 @@ export function LiveOnMoneta() {
         </div>
       ) : shown.length === 0 ? (
         <EmptyState
+          className="border-dashed border-line-strong bg-transparent py-14"
           title={
             filter === "all"
               ? "No raises yet"
@@ -157,6 +167,22 @@ export function LiveOnMoneta() {
           </div>
         </>
       )}
+    </div>
+  );
+}
+
+/** V. Ledger — protocol figures and live projects, straight from the indexer. */
+export function Ledger() {
+  return (
+    <div className="flex flex-col gap-16">
+      <SectionHead n="V" label="Ledger" title="On the ledger.">
+        <p className="body-lg text-fg-2">
+          <LiveDot tone="live" className="mr-3 align-middle" />
+          Every figure is read from the chain&apos;s indexer as blocks land.
+        </p>
+      </SectionHead>
+      <Figures />
+      <Listings />
     </div>
   );
 }

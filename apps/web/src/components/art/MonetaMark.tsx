@@ -38,20 +38,3 @@ export function Wordmark({ className }: { className?: string }) {
     </span>
   );
 }
-
-/** Glass hero tile holding the mark. */
-export function HeroTile({ className }: { className?: string }) {
-  return (
-    <div
-      aria-hidden="true"
-      className={cn(
-        "grid size-40 place-items-center rounded-[36px] border border-line-strong bg-[linear-gradient(180deg,#2a2a2a,#121212)] shadow-[inset_0_1px_0_rgb(255_255_255/0.08)]",
-        className,
-      )}
-    >
-      <div className="grid size-[120px] place-items-center rounded-[28px] bg-[linear-gradient(180deg,#1f1f1f,#141414)] shadow-[inset_0_1px_0_rgb(255_255_255/0.06)]">
-        <MonetaMark className="size-16 text-fg" title="" />
-      </div>
-    </div>
-  );
-}
