@@ -14,11 +14,40 @@ const plexMono = IBM_Plex_Mono({
   display: "swap",
 });
 
+const SITE_URL = "https://www.monetafutarchy.xyz";
+const TITLE = "Moneta — Raise In Public. Spend By Verdict.";
+const DESCRIPTION =
+  "Permissionless futarchy capital formation on Monad. Every dollar leaves a project's treasury only when the market says it creates value.";
+
+/** Link-preview card: 1200 × 628 (1.91:1) rendered at 2×, for X's summary_large_image and Open Graph. */
+const SOCIAL_IMAGE = {
+  url: "/og.png",
+  width: 2400,
+  height: 1256,
+  alt: "Moneta — Raise In Public. Spend By Verdict. Permissionless futarchy on Monad.",
+};
+
 export const metadata: Metadata = {
-  title: { default: "Moneta — Raise In Public. Spend By Verdict.", template: "%s · Moneta" },
-  description:
-    "Permissionless futarchy capital formation on Monad. Every dollar leaves a project's treasury only when the market says it creates value.",
+  metadataBase: new URL(SITE_URL),
+  title: { default: TITLE, template: "%s · Moneta" },
+  description: DESCRIPTION,
   icons: { icon: "/icon.svg" },
+  openGraph: {
+    type: "website",
+    siteName: "Moneta",
+    locale: "en_US",
+    title: TITLE,
+    description: DESCRIPTION,
+    images: [SOCIAL_IMAGE],
+  },
+  twitter: {
+    card: "summary_large_image",
+    site: "@monetaxyz",
+    creator: "@monetaxyz",
+    title: TITLE,
+    description: DESCRIPTION,
+    images: [SOCIAL_IMAGE],
+  },
 };
 
 export const viewport: Viewport = { themeColor: "#000000", colorScheme: "dark" };
