@@ -1,134 +1,113 @@
+<img src="apps/web/public/og.png" alt="Moneta. Raise In Public. Spend By Verdict." />
+
 # Moneta
 
-**Permissionless futarchy capital formation on Monad.**
+### Where unicorns raise their first round.
 
-Anyone can open a raise. A successful raise launches three things in one transaction:
-- a token
-- protocol-owned liquidity
-- a treasury that answers to markets
+Moneta is the initial funding platform for crypto startups on Monad. Founders raise in public, backers fund the plan, and the market decides how every dollar gets spent. All powered by futarchy.
 
-The founder draws a streamed operating budget. Every other dollar leaves the treasury only through a passed proposal. Each proposal opens two decision markets, one pricing the token if it passes and one if it fails, and settles by comparing their lagging TWAPs:
-
-```text
-PASS  ⇔  twapPass × 10,000 ≥ twapFail × (10,000 + threshold)
-```
-
-- Decisions: [`docs/adr/`](docs/adr)
-- Security triage: [`docs/security/static-analysis.md`](docs/security/static-analysis.md)
+**[Launch the app](https://www.monetafutarchy.xyz)** · [Read the docs](https://www.monetafutarchy.xyz/docs) · [Run it locally](#run-it-locally)
 
 ---
 
-## Repository
+## The Problem
 
-```text
-apps/
-  web/          Next.js 16 app: explore, create wizard, raise, project, proposal trading, portfolio, docs, status
-  indexer/      Envio HyperIndex: event-sourced read models served over GraphQL
-  bots/         keeper (finalize, crank), belief-driven market makers, watcher (invariants, alerts)
-packages/
-  contracts/    Foundry: Factory, Raise, ProjectToken, Treasury, ConditionalVault/Token, MonetaAMM, Router
-  sdk/          generated ABIs + address book, bit-exact protocol math, action codec, reads, tx pipeline
-  config/       shared tsconfig presets
-scripts/        dev.sh (local stack), e2e.sh (browser E2E)
-docs/           ADRs, security triage, runbooks
-```
+A crypto founder raising a first round has two options today, and both are broken.
 
-Dependencies flow one way: `contracts → sdk → {web, bots, indexer}`. The SDK is the only bridge.
+- **Venture capital** is slow, private and gated by who you know. The community only gets in at launch, often as exit liquidity.
+- **Token launchpads** are fast but built for hype. Once the money lands, nothing holds the founder to the plan, and backers can only sell.
 
-## Quickstart
+Neither one ties the money to the work.
 
-The web app runs on **Monad testnet** against the deployed contracts. The local chain (anvil) is only for automated tests and bot or indexer development, and it has no UI.
+## The Fix
 
-**Requirements:**
-- Node 24 (`nvm use`)
-- pnpm 10 (`corepack enable`)
-- [Foundry](https://getfoundry.sh) (`foundryup`)
-- Docker (the indexer runs Postgres + Hasura)
+Moneta lets anyone raise in public, then puts the treasury under the control of the market instead of the founder.
+
+The founder gets a steady budget to build with. Every other dollar is released only when the market agrees it makes the project more valuable. That is futarchy: instead of voting on what to do, people bet on what will work, and the bet decides.
+
+## How It Works
+
+1. **Raise.** A founder posts a plan, a token price and a funding goal. Anyone can back it with USDC, and everyone pays the same price. Miss the goal and every backer is refunded in full.
+2. **Launch.** A successful raise launches the token, a market to trade it in, and a treasury, all in one transaction. No one holds the treasury's keys, not even the founder.
+3. **Build.** The founder draws an operating budget that streams in by the second. Anything beyond that, like releasing the next milestone's funds, needs a proposal. Anyone can write one.
+4. **Decide.** Each proposal opens two markets. One prices the token if the proposal passes, the other if it fails. If the pass price comes out ahead, the money moves automatically. If not, it stays put.
+
+### A quick example
+
+Lumen raises 1,000,000 USDC. Months later the team ships its mainnet and asks for the next 250,000 USDC.
+
+Traders price Lumen at $0.118 a token if the funds are released and $0.104 if they are not. Releasing them is worth more, so the proposal passes and the USDC goes straight to the team. No vote, no multisig, no one signing off.
+
+Then the team asks for 400,000 USDC to pay for a celebrity endorsement. Traders price that world lower, the proposal fails, and the money never leaves the treasury.
+
+## Why It Works for Everyone
+
+**Founders** raise without a gatekeeper, get a predictable budget from day one, and build alongside a community that is invested in their success. An optional performance package mints extra tokens to the team only when the token holds at 2x, 4x or 8x the raise price.
+
+**Backers** pay the same price as everyone else and can trade from launch. Beyond the founder's budget, their money is only spent when the market approves. If a team stalls, anyone can propose winding the project down. If the market agrees, every holder redeems their exact share of what is left in the treasury.
+
+**Traders** earn by being right about which decisions make a project more valuable. Their bets are the signal that steers the capital.
+
+## Built to Be Trusted
+
+- **No one can touch the funds.** The contracts cannot be upgraded. Moneta's admin can only adjust settings for future raises, within hard limits. It cannot move money, change a live project's rules, or pause trading.
+- **Exits always work.** Refunds, claims and redemptions cannot be blocked by anyone.
+- **Hard to game.** Verdicts use the average price across a multi-day trading window, and the tracked price can only move a small step each second. A last-minute pump barely registers, and anyone who pushes the price off course hands a profit to the traders who push it back.
+- **Proposals carry a deposit.** Proposers post USDC that comes back if the proposal passes and goes to the treasury if it fails.
+- **Every project stands alone.** Each raise and treasury is its own contract, so trouble in one cannot reach another.
+
+## Why Monad
+
+Every proposal runs two markets that trade for days and record a price every second. That only works on a chain that is fast and cheap. Monad's 300 ms blocks and sub-second finality make fully onchain decision markets practical, and full EVM compatibility means a passed proposal can call any contract on Monad.
+
+## Try It
+
+Moneta is live on Monad testnet at **[monetafutarchy.xyz](https://www.monetafutarchy.xyz)**.
+
+1. Add Monad Testnet to your wallet: chain ID `10143`, RPC `https://testnet-rpc.monad.xyz`.
+2. Get test MON from [faucet.monad.xyz](https://faucet.monad.xyz) and test USDC from [faucet.circle.com](https://faucet.circle.com).
+3. Back a raise, trade a proposal, or launch your own.
+
+## Run It Locally
+
+You need Node 24, pnpm 10, [Foundry](https://getfoundry.sh) and Docker.
 
 ```bash
 pnpm install
-cp .env.example .env        # defaults work as-is; no secrets needed
-pnpm dev                    # testnet indexer (Docker, :8081) → web app on Monad testnet
+cp .env.example .env
+pnpm dev
 ```
 
-Open <http://localhost:3000>. `pnpm dev` checks that the testnet deployment (`packages/contracts/deployments/10143.json`) is live, then reuses or starts the indexer and the web app. The first indexer start builds a Docker image, which takes a few minutes.
+Open <http://localhost:3000>. No secrets are needed. The app talks to the contracts already deployed on Monad testnet, and the first run takes a few minutes while it builds the indexer.
 
-To transact, add **Monad Testnet** to your wallet (chain 10143, RPC `https://testnet-rpc.monad.xyz`). Then fund it with MON from [faucet.monad.xyz](https://faucet.monad.xyz) and USDC from [faucet.circle.com](https://faucet.circle.com) (Monad Testnet).
+Other useful commands:
 
-| Service | URL |
-|---|---|
-| Web app | http://localhost:3000 |
-| GraphQL, testnet (Hasura) | http://localhost:8081/v1/graphql |
-| Chain | Monad testnet · chain id 10143 · 300 ms blocks |
+- `pnpm test` runs every test suite: contracts, SDK, indexer, bots and web.
+- `pnpm dev:local` starts a private local chain with demo projects and trading bots. It has no UI and is meant for testing.
+- `bash scripts/e2e.sh` runs the full user journey in a real browser.
+- `pnpm typecheck` and `pnpm lint` run the static checks.
 
-### Local test stack
+To deploy your own contracts to testnet, follow the [testnet deploy runbook](docs/runbooks/testnet-deploy.md).
 
-```bash
-pnpm dev:local              # anvil → deploy → seed → indexer → bots (no web UI)
+## What's Inside
+
+```text
+apps/web             The app (Next.js): explore, launch a raise, trade proposals, track your portfolio
+apps/indexer         Turns onchain events into a fast, searchable API (Envio HyperIndex)
+apps/bots            Settles finished proposals, keeps markets trading, watches for problems
+packages/contracts   The smart contracts (Solidity, Foundry)
+packages/sdk         Shared TypeScript toolkit that connects the contracts to everything else
 ```
 
-The local stack is idempotent: it detects a running chain, deployment, seed and indexer and reuses them.
-- `pnpm dev:local -- --fresh` restarts from genesis.
-- `pnpm dev:local -- --no-bots` skips the bots.
-- It serves GraphQL on http://localhost:8080/v1/graphql and the chain on http://127.0.0.1:8545 (chain id 31337, 1 s blocks).
-- Logs go to `.dev/*.log`.
+Design decisions are recorded in [docs/adr](docs/adr), and the security review lives in [docs/security](docs/security/static-analysis.md).
 
-`bash scripts/e2e.sh` boots whatever it needs from this stack and builds its own copy of the web app, pinned to the local chain.
+## Roadmap
 
-## Commands
+- **Now:** permissionless raises, milestone funding and redemption.
+- **Next:** existing Monad projects adopt Moneta treasuries.
+- **Then:** the Moneta Fund, where markets decide which projects get funded at all.
+- **Later:** revenue share, convertibles and secondary markets.
 
-| Command | What it does |
-|---|---|
-| `pnpm dev` | The app on Monad testnet: testnet indexer + web (see above) |
-| `pnpm dev:local` | Local test stack, no UI: anvil → deploy → seed → indexer → bots |
-| `pnpm dev:indexer:testnet` | Testnet indexer only (Docker Compose, :8081) |
-| `pnpm dev:chain` / `deploy:local` / `seed:local` | Individual local stack steps |
-| `pnpm dev:web` / `dev:indexer` / `dev:bots` | Run one service (web uses `.env` → testnet; indexer and bots default to local) |
-| `pnpm test` | Every unit suite: forge (unit, fuzz 1k, invariant, scenario, adversarial), SDK parity, indexer handlers, bots, web |
-| `pnpm typecheck` · `pnpm lint` · `pnpm format:check` | Static checks |
-| `pnpm scenario --network local` | Headless full lifecycle through the SDK, with on-chain assertions |
-| `bash scripts/e2e.sh` | Browser E2E: builds the web app with a scripted E2E wallet and runs Playwright through the full user journey |
-| `pnpm --filter @moneta/sdk parity local` | Indexer ⇄ chain field-by-field parity |
-| `pnpm --filter @moneta/contracts gas:check` | Gas budgets (Monad charges the gas *limit*) |
-| `pnpm --filter @moneta/contracts slither` / `aderyn` | Static analysis |
+## The Name
 
-## Testing
-
-| Layer | Where | What |
-|---|---|---|
-| Contracts | `packages/contracts/test` | Unit, fuzz, stateful invariants (vault solvency, AMM backing, router holds nothing), lifecycle scenarios, adversarial (end-of-window pumps, dust spam, reentrant targets), gas budgets, fork tests against Monad testnet |
-| SDK | `packages/sdk/test` | Bit-exact parity with forge-generated vectors (CPMath, lagging oracle), action codec, error decoding |
-| Indexer | `apps/indexer/test`, `packages/sdk/scripts/indexer-parity.ts` | Handlers on simulated events (Envio test indexer), plus the parity script against a live chain |
-| Bots | `apps/bots/test` | Trader belief math and target sizing |
-| Web | `apps/web/src/**/*.test.ts`, `apps/web/e2e` | Wizard validation mirroring `MonetaFactory._validate`, launch math, governance bounds; Playwright E2E |
-
-There is no CI gate on pull requests or pushes: run these locally before merging. The security checks (Slither, Aderyn, Gitleaks, `pnpm audit`) and their commands are listed in [`docs/security/static-analysis.md`](docs/security/static-analysis.md). For deeper runs: `FOUNDRY_PROFILE=deep forge test --no-match-path 'test/fork/*'` in `packages/contracts` (50k fuzz runs, deep invariants) and `pnpm --filter @moneta/contracts test:fork` (fork tests against Monad testnet).
-
-## Monad testnet
-
-| | |
-|---|---|
-| Chain | 10143 · 300 ms blocks · ~600 ms finality |
-| Quote asset | Circle USDC `0x534b2f3A21130d7a60830c2Df862319e593943A3` (6 decimals, EIP-2612 v2) |
-| Faucets | MON: [faucet.monad.xyz](https://faucet.monad.xyz) · USDC: [faucet.circle.com](https://faucet.circle.com) |
-| Explorers | [MonadVision](https://testnet.monadvision.com) · [Monadscan](https://testnet.monadscan.com) |
-
-Deploying needs an encrypted Foundry keystore. Private keys never go in `.env`.
-
-```bash
-cast wallet import moneta-deployer --interactive       # fund it with MON from the faucet
-pnpm deploy:testnet                                    # idempotent; writes packages/contracts/deployments/10143.json
-pnpm --filter @moneta/contracts verify:testnet         # MonadVision (Sourcify) + Monadscan
-pnpm --filter @moneta/bots exec tsx src/index.ts check --network testnet
-```
-
-The web app already targets testnet (`NEXT_PUBLIC_CHAIN_ID=10143`), and `pnpm dev` self-hosts the indexer with Docker Compose. Without `ENVIO_API_TOKEN`, it syncs over the RPC; with the token, it uses HyperSync. Envio Cloud is the hosted alternative. Run the bots from the published image with `KEEPER_KEY` / `TRADER_MNEMONIC` set in your platform's secret store. The full checklist is in [`docs/runbooks/testnet-deploy.md`](docs/runbooks/testnet-deploy.md).
-
-## Security model
-
-- **Immutable:** no upgrades. New versions ship as a new factory, and existing projects keep the rules they launched with.
-- **Admin can't touch funds:** the protocol Safe can allowlist quote assets, set fees within hard caps, set bounds for *new* raises, and pause *new* raise creation. It can't move funds, change a live project, or pause trading.
-- **Exits always open:** refunds, claims, merges, conditional redemptions and NAV redemptions can't be blocked.
-- **Indexer is never authoritative:** every gate and amount in the UI is read from the chain. The indexer serves only lists and history.
-
-See [`/docs#security`](apps/web/src/app/docs/page.tsx) in the app and the [static-analysis triage](docs/security/static-analysis.md).
+Rome minted its coins at the temple of Juno Moneta, and the words _money_ and _mint_ both come from her name. That name is traced to the Latin _monere_, to warn or advise. Moneta is a mint that takes advice: capital moves only when the market says it should.
