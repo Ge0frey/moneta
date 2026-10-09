@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { ProjectCard } from "@/components/ui/cards";
 import { Chip, LiveDot } from "@/components/ui/pills";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/states";
+import { deployment } from "@/lib/env";
 import { useProjects, useProtocolStats, useRaises } from "@/lib/hooks/indexed";
 import { buildListings, STATUS_META, type ListingStatus } from "@/lib/listing";
 import { cn } from "@/lib/cn";
@@ -53,7 +54,7 @@ function Figures() {
         className="border-b pr-4 sm:pr-6 lg:border-b-0"
         label="Total raised"
         value={v(formatUsd(big(data?.totalRaised), 6, { compact: true }))}
-        sub="USDC accepted at launch"
+        sub={`${deployment?.testQuote ? "USDC + mUSDC" : "USDC"} accepted at launch`}
       />
       <Figure
         className="border-b pl-4 sm:px-6 lg:border-b-0"

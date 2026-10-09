@@ -1670,7 +1670,14 @@ export const monetaRouterAbi = [
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 export const monetaUsdcAbi = [
-  { type: "constructor", inputs: [], stateMutability: "nonpayable" },
+  {
+    type: "constructor",
+    inputs: [
+      { name: "name_", internalType: "string", type: "string" },
+      { name: "symbol_", internalType: "string", type: "string" },
+    ],
+    stateMutability: "nonpayable",
+  },
   {
     type: "function",
     inputs: [],

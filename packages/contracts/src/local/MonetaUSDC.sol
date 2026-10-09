@@ -8,9 +8,11 @@ import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 
 /// @title MonetaUSDC
-/// @notice Moneta's USDC for local chains. Mirrors the Circle USDC interface Moneta relies on: 6 decimals and
-///         EIP-2612 permit with EIP-712 domain version "2". Minting is open on local chains; testnet and mainnet use
-///         Circle USDC, so this contract is never deployed there.
+/// @notice Open-mint USDC for test networks. Mirrors the Circle USDC interface Moneta relies on: 6 decimals and
+///         EIP-2612 permit with EIP-712 domain version "2" (the domain name is the token name).
+///         - Local chains: the primary quote, deployed as "USD Coin" / "USDC".
+///         - Local and Monad testnet: the test quote, deployed as "Moneta Test USDC" / "mUSDC" next to Circle USDC,
+///           for demos and large-amount testing (script/TestQuote.s.sol). Never deployed on mainnet.
 contract MonetaUSDC is ERC20, IERC20Permit, EIP712, Nonces {
     bytes32 private constant PERMIT_TYPEHASH =
         keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
@@ -18,7 +20,7 @@ contract MonetaUSDC is ERC20, IERC20Permit, EIP712, Nonces {
     error ExpiredSignature(uint256 deadline);
     error InvalidSigner(address signer, address owner);
 
-    constructor() ERC20("USD Coin", "USDC") EIP712("USD Coin", "2") {}
+    constructor(string memory name_, string memory symbol_) ERC20(name_, symbol_) EIP712(name_, "2") {}
 
     function decimals() public pure override returns (uint8) {
         return 6;

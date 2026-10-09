@@ -165,9 +165,27 @@ export async function ensureApproval(
   );
 }
 
-export async function usdcBalance(env: BotEnv, who: Address) {
+/** Open mint of the test quote (mUSDC) to `account` itself, so it works on testnet without the deployer key. */
+export async function mintTestQuote(env: BotEnv, account: PrivateKeyAccount, amount: bigint) {
+  const testQuote = env.deployment.testQuote;
+  if (!testQuote) throw new Error("no test quote on this deployment (script/test-quote.sh)");
+  await send(
+    env,
+    account,
+    txs.mintTestQuote(testQuote, account.address, amount),
+    `mint mUSDC → ${account.address.slice(0, 8)}`,
+    { quiet: true },
+  );
+}
+
+/** Quote balance; the primary quote unless `token` names another (a project's own quote). */
+export async function usdcBalance(
+  env: BotEnv,
+  who: Address,
+  token: Address = env.deployment.quote,
+) {
   return env.publicClient.readContract({
-    address: env.deployment.quote,
+    address: token,
     abi: erc20Abi,
     functionName: "balanceOf",
     args: [who],

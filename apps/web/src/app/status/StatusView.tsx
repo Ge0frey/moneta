@@ -302,6 +302,9 @@ export function StatusView() {
                       ["Vault", deployment.vault],
                       ["Router", deployment.router],
                       ["Quote (USDC)", deployment.quote],
+                      ...(deployment.testQuote
+                        ? ([["Test quote (mUSDC)", deployment.testQuote]] as const)
+                        : []),
                     ] as const
                   ).map(([label, addr]) => (
                     <li key={label} className="flex items-center justify-between gap-2">

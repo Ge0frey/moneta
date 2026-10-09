@@ -32,6 +32,8 @@ export type DeploymentRecord = {
   deployedAt: number;
   deployer: Address;
   quote: Address;
+  /** Open-mint test quote (mUSDC), allowlisted next to \`quote\` — script/TestQuote.s.sol. Absent on mainnet. */
+  testQuote?: Address;
   factory: Address;
   amm: Address;
   vault: Address;

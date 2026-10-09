@@ -35,7 +35,7 @@ abstract contract MonetaTestBase is Test {
     function setUp() public virtual {
         vm.warp(1_700_000_000);
         (alice, aliceKey) = makeAddrAndKey("alice");
-        usdc = new MonetaUSDC();
+        usdc = new MonetaUSDC("USD Coin", "USDC");
         MonetaDeployer.Deployment memory d = MonetaDeployer.deploy(
             MonetaDeployer.Config({
                 owner: address(this),

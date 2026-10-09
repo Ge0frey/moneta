@@ -65,8 +65,11 @@ Every proposal runs two markets that trade for days and record a price every sec
 Moneta is live on Monad testnet at **[monetafutarchy.xyz](https://www.monetafutarchy.xyz)**.
 
 1. Add Monad Testnet to your wallet: chain ID `10143`, RPC `https://testnet-rpc.monad.xyz`.
-2. Get test MON from [faucet.monad.xyz](https://faucet.monad.xyz) and test USDC from [faucet.circle.com](https://faucet.circle.com).
-3. Back a raise, trade a proposal, or launch your own.
+2. Get test MON from [faucet.monad.xyz](https://faucet.monad.xyz) for gas.
+3. Get funds. Raises take either token, and each raise shows which one it uses:
+   - **USDC:** Circle's test USDC from [faucet.circle.com](https://faucet.circle.com), 20 every 2 hours.
+   - **mUSDC:** Moneta's test token for large amounts. Mint 10,000 per click from Portfolio → Test funds or from any mUSDC raise or market.
+4. Back a raise, trade a proposal, or launch your own.
 
 ## Run It Locally
 

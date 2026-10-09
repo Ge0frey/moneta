@@ -8,6 +8,8 @@ export type DeploymentRecord = {
   deployedAt: number;
   deployer: Address;
   quote: Address;
+  /** Open-mint test quote (mUSDC), allowlisted next to `quote` — script/TestQuote.s.sol. Absent on mainnet. */
+  testQuote?: Address;
   factory: Address;
   amm: Address;
   vault: Address;
@@ -32,6 +34,7 @@ export const deployments: Record<number, DeploymentRecord> = {
     "raiseImpl": "0xEBBF3ac80D5ad72fce4259A0d007D6dCC9a5303b",
     "router": "0x21eA0c029E925f6BD95f607a2CF8B2717638F4A9",
     "startBlock": 68398017,
+    "testQuote": "0xa5c5fa04cF8b31F783f860D9aF779b172751580A",
     "treasuryImpl": "0xA97059a58278EfF587928377da5EEce1A7245a41",
     "vault": "0x694F10e57D385B1CbB692515Fd2A0Efd4302F7Cc"
   },
@@ -39,7 +42,7 @@ export const deployments: Record<number, DeploymentRecord> = {
     "amm": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
     "chainId": 31337,
     "conditionalTokenImpl": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
-    "deployedAt": 1791138685,
+    "deployedAt": 1791526875,
     "deployer": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
     "factory": "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853",
     "network": "local",
@@ -47,7 +50,8 @@ export const deployments: Record<number, DeploymentRecord> = {
     "quote": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
     "raiseImpl": "0x0165878A594ca255338adfa4d48449f69242Eb8F",
     "router": "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6",
-    "startBlock": 1,
+    "startBlock": 2,
+    "testQuote": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
     "treasuryImpl": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
     "vault": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
   }

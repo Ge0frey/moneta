@@ -3,6 +3,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   ProposalStatus,
+  quoteAssets,
   quoteSwap,
   readBalances,
   readProposal,
@@ -14,7 +15,15 @@ import {
 } from "@moneta/sdk";
 import { maxUint256, type Address } from "viem";
 import { log, type BotEnv } from "./config.js";
-import { ensureApproval, listTreasuries, mintUsdc, sleep, trySend, usdcBalance } from "./lib.js";
+import {
+  ensureApproval,
+  listTreasuries,
+  mintTestQuote,
+  mintUsdc,
+  sleep,
+  trySend,
+  usdcBalance,
+} from "./lib.js";
 import { buyToTarget, gauss, passProbability, sellToTarget, type Scenario } from "./market.js";
 
 const MIN_TRADE = 50_000n; // 0.05 USDC
@@ -55,8 +64,15 @@ export async function runTraders(env: BotEnv, opts: { intervalMs?: number } = {}
       if ((await usdcBalance(env, t.address)) < 1000_000000n) poor.push(t.address);
     if (poor.length) await mintUsdc(env, poor, 10_000_000000n);
   }
-  for (const t of traders)
-    await ensureApproval(env, t, env.deployment.quote, env.deployment.router, maxUint256 / 2n);
+  // Test quote (mUSDC): open mint on every network, so traders fund themselves for mUSDC markets.
+  const testQuote = env.deployment.testQuote;
+  if (testQuote)
+    for (const t of traders)
+      if ((await usdcBalance(env, t.address, testQuote)) < 1000_000000n)
+        await mintTestQuote(env, t, 10_000_000000n);
+  for (const q of quoteAssets(env.deployment))
+    for (const t of traders)
+      await ensureApproval(env, t, q.address, env.deployment.router, maxUint256 / 2n);
 
   const meta = new Map<Address, { token: Address; quote: Address }>();
   // belief offset per (proposal, trader, side), fixed for the life of the market
@@ -88,6 +104,7 @@ export async function runTraders(env: BotEnv, opts: { intervalMs?: number } = {}
           ]);
           meta.set(treasury, { token, quote });
         }
+        const { quote } = meta.get(treasury)!;
         const view = await readProposal(
           env.publicClient,
           env.deployment,
@@ -115,7 +132,7 @@ export async function runTraders(env: BotEnv, opts: { intervalMs?: number } = {}
           if (!seeded.has(seedKey)) {
             seeded.add(seedKey);
             const seed = (view.passPool.reserveQuote * share) / 20_000n; // half a max trade per side
-            if (seed >= MIN_TRADE && (await usdcBalance(env, trader.address)) >= seed * 2n) {
+            if (seed >= MIN_TRADE && (await usdcBalance(env, trader.address, quote)) >= seed * 2n) {
               for (const side of [true, false]) {
                 await trySend(
                   env,
@@ -143,7 +160,8 @@ export async function runTraders(env: BotEnv, opts: { intervalMs?: number } = {}
           if (gapBps > 0) {
             // Underpriced in this world → buy toward the belief.
             const amount = buyToTarget(pool, target, share, maxSpend);
-            if (amount < MIN_TRADE || (await usdcBalance(env, trader.address)) < amount) continue;
+            if (amount < MIN_TRADE || (await usdcBalance(env, trader.address, quote)) < amount)
+              continue;
             const out = quoteSwap(
               {
                 reserveBase: pool.reserveBase,

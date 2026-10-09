@@ -2,6 +2,7 @@ import { big, formatScaledPrice, formatTokenPrice, formatUsd } from "@moneta/sdk
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
+import { quoteSym } from "@/lib/env";
 import { listingHref, memoSummary, STATUS_META, type Listing } from "@/lib/listing";
 import { StatusChip, Tag } from "./pills";
 
@@ -63,6 +64,7 @@ export function ProjectCard({ l, className }: { l: Listing; className?: string }
         <div className="flex flex-wrap items-center gap-2">
           <StatusChip tone={meta.tone} label={meta.label} />
           <Tag>${l.raise.symbol}</Tag>
+          <Tag>{quoteSym(l.raise.quote)}</Tag>
           {l.project && <Tag>{l.project.holderCount} holders</Tag>}
         </div>
       </div>

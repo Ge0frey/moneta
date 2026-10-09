@@ -25,7 +25,7 @@ contract Deploy is Script {
         vm.startBroadcast();
         (, address deployer,) = vm.readCallers();
 
-        address quote = isLocal ? address(new MonetaUSDC()) : vm.envAddress("QUOTE_TOKEN");
+        address quote = isLocal ? address(new MonetaUSDC("USD Coin", "USDC")) : vm.envAddress("QUOTE_TOKEN");
         address feeRecipient = vm.envOr("FEE_RECIPIENT", deployer);
         address safe = vm.envOr("PROTOCOL_SAFE", address(0));
 

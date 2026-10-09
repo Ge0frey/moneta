@@ -11,11 +11,14 @@ export function ConfigEditor({
   setCfg,
   errors,
   bounds: b,
+  quoteSymbol = "USDC",
 }: {
   cfg: CfgInput;
   setCfg: (c: CfgInput) => void;
   errors: Record<string, string>;
   bounds: Bounds;
+  /** The project's quote ("USDC" or "mUSDC"): the bond is paid in it. */
+  quoteSymbol?: string;
 }) {
   const fields: { k: keyof GovConfig; label: string; suffix: string; hint: string }[] = [
     {
@@ -66,7 +69,12 @@ export function ConfigEditor({
       suffix: "sec",
       hint: "Retry window if a passed action reverts",
     },
-    { k: "bond", label: "Proposal bond", suffix: "USDC", hint: "Refunded on PASS, kept on FAIL" },
+    {
+      k: "bond",
+      label: "Proposal bond",
+      suffix: quoteSymbol,
+      hint: "Refunded on PASS, kept on FAIL",
+    },
   ];
   return (
     <div className="grid gap-4 sm:grid-cols-2">
