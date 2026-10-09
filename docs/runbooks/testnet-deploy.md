@@ -11,7 +11,7 @@ Every step is idempotent: re-running after a failure, or after a testnet reset, 
 | Protocol Safe (optional, recommended) | Safe 1.4.1 on Monad testnet. Put its address in `PROTOCOL_SAFE`. Without it, the deployer stays owner |
 | Fee recipient | `FEE_RECIPIENT` (defaults to the deployer) |
 | Monadscan API key (optional) | `MONADSCAN_API_KEY` for the second explorer |
-| Keeper and trader wallets | Separate EOAs. Fund each with MON. Fund traders with Circle USDC ([faucet.circle.com](https://faucet.circle.com), 20 USDC / 2 h / address) |
+| Keeper and trader wallets | Separate EOAs. Fund each with MON. Fund traders with Circle USDC ([faucet.circle.com](https://faucet.circle.com), 20 USDC / 2 h / address). Traders mint their own mUSDC once the test quote is deployed (step 1b) |
 | Envio API token | [envio.dev/app/api-tokens](https://envio.dev/app/api-tokens), for HyperSync |
 
 ## 1. Contracts
@@ -24,6 +24,19 @@ pnpm --filter @moneta/contracts verify:testnet
 The deploy script asserts its post-conditions (wiring, allowlist, bounds, owners). With `PROTOCOL_SAFE` set, ownership is offered to the Safe (Ownable2Step). **Accept it from the Safe UI** for both `MonetaFactory` and `MonetaAMM`.
 
 `pnpm deploy:testnet` also regenerates `packages/sdk/src/generated/deployments.ts`. Commit it along with `deployments/10143.json`.
+
+## 1b. Test quote (mUSDC)
+
+Adds an open-mint test USDC next to Circle USDC, for demos and for testing with large amounts (see [ADR 0007](../adr/0007-quote-asset.md)). It deploys no protocol contract.
+
+```bash
+pnpm deploy:test-quote:testnet   # deploys mUSDC, factory.setQuoteAllowed(mUSDC, true), writes testQuote; regenerates the SDK
+```
+
+- The broadcaster must own the factory. With ownership already handed to a Safe, run only the deployment part and make the `setQuoteAllowed` call from the Safe UI.
+- Idempotent: a re-run with `testQuote` live and allowlisted exits without a transaction (and without asking for the keystore password).
+- Commit `deployments/10143.json` and `packages/sdk/src/generated/deployments.ts`, then push to `main`. Vercel rebuilds the web app with the new address book.
+- The indexer needs no change and no redeploy: it reads each raise's quote from `RaiseCreated`.
 
 ## 2. Smoke
 
@@ -108,4 +121,4 @@ Or use the app's **Create** wizard from a funded wallet. Watch `/status`: the ke
 
 ## Testnet reset
 
-If the chain is reset from genesis, re-run steps 1–6. `deploy.sh` notices the previous deployment has no code and redeploys.
+If the chain is reset from genesis, re-run steps 1–6 (including 1b). `deploy.sh` notices the previous deployment has no code and redeploys, and `test-quote.sh` notices the recorded `testQuote` has no code and deploys a new one.

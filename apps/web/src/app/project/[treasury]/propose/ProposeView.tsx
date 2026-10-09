@@ -37,7 +37,8 @@ import { Field, Input, RadioCards, Segmented } from "@/components/ui/forms";
 import { MemoEditor } from "@/components/ui/memo-editor";
 import { Eyebrow, Tag } from "@/components/ui/pills";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/states";
-import { requireDeployment } from "@/lib/env";
+import { QuoteFaucet } from "@/components/tx/QuoteFaucet";
+import { quoteSym, requireDeployment } from "@/lib/env";
 import { useBalances, useFactoryState, useProjectState } from "@/lib/hooks/chain";
 import { useMonetaTx } from "@/lib/hooks/tx";
 import { describeAction } from "../proposal/[id]/ProposalView";
@@ -50,14 +51,14 @@ import {
 
 type Kind = ProposalAction["type"];
 
-const KINDS: { value: Kind; title: string; sub: string; teamOnly?: boolean }[] = [
+const kinds = (qSym: string): { value: Kind; title: string; sub: string; teamOnly?: boolean }[] => [
   {
     value: "TrancheRelease",
     title: "Release tranche",
-    sub: "Unlock a milestone's USDC to the founder",
+    sub: `Unlock a milestone's ${qSym} to the founder`,
     teamOnly: true,
   },
-  { value: "Transfer", title: "Transfer", sub: "Send USDC or tokens from the treasury" },
+  { value: "Transfer", title: "Transfer", sub: `Send ${qSym} or tokens from the treasury` },
   { value: "SetBudget", title: "Set budget", sub: "Change the founder's monthly stream" },
   { value: "Mint", title: "Mint", sub: "Issue new tokens, e.g. to an OTC buyer" },
   { value: "Buyback", title: "Buyback", sub: "Buy and burn on the spot pool" },
@@ -119,6 +120,7 @@ function Composer({ project: p, bounds }: { project: ProjectView; bounds: Bounds
   const router = useRouter();
   const client = usePublicClient();
   const sym = p.tokenMeta.symbol;
+  const qSym = quoteSym(p.quote);
   const isFounder = !!tx.address && tx.address.toLowerCase() === p.founder.toLowerCase();
   const unreleased = p.tranches.map((t, i) => ({ ...t, i })).filter((t) => !t.released);
 
@@ -212,7 +214,7 @@ function Composer({ project: p, bounds }: { project: ProjectView; bounds: Bounds
       case "Buyback": {
         const q = parseAmount(amount, 6);
         const m = minOut ? parseAmount(minOut, 18) : 0n;
-        if (!q) e.amount = "Enter a USDC amount above zero";
+        if (!q) e.amount = `Enter a ${qSym} amount above zero`;
         else if (q > p.availableQuote)
           e.amount = `Treasury has ${formatUsd(p.availableQuote)} available`;
         if (m === undefined) e.minOut = "Not a valid amount";
@@ -267,6 +269,7 @@ function Composer({ project: p, bounds }: { project: ProjectView; bounds: Bounds
     minOut,
     mintCap,
     sym,
+    qSym,
     bounds,
     cfg,
     target,
@@ -306,7 +309,8 @@ function Composer({ project: p, bounds }: { project: ProjectView; bounds: Bounds
       if (bond > 0n) {
         permit = await tx.permit(p.quote, p.treasury, bond).catch(() => undefined);
         if (permit === undefined) return;
-        if (!permit && !(await tx.ensureAllowance(p.quote, p.treasury, bond, "USDC bond"))) return;
+        if (!permit && !(await tx.ensureAllowance(p.quote, p.treasury, bond, `${qSym} bond`)))
+          return;
       }
       const receipt = await tx.run({
         title: `Propose: ${actionTitle(action)}`,
@@ -330,7 +334,7 @@ function Composer({ project: p, bounds }: { project: ProjectView; bounds: Bounds
     }
   };
 
-  const kindOptions = KINDS.map((k) => ({
+  const kindOptions = kinds(qSym).map((k) => ({
     value: k.value,
     title: k.title,
     sub: k.teamOnly && !isFounder ? "Founder only" : k.sub,
@@ -406,7 +410,7 @@ function Composer({ project: p, bounds }: { project: ProjectView; bounds: Bounds
                         setAmount("");
                       }}
                       options={[
-                        { value: "quote", label: "USDC" },
+                        { value: "quote", label: qSym },
                         { value: "token", label: sym },
                         { value: "custom", label: "Other ERC-20" },
                       ]}
@@ -447,7 +451,7 @@ function Composer({ project: p, bounds }: { project: ProjectView; bounds: Bounds
                         autoComplete="off"
                         value={amount}
                         onChange={(e) => setAmount(e.target.value)}
-                        suffix={asset === "quote" ? "USDC" : asset === "token" ? sym : ""}
+                        suffix={asset === "quote" ? qSym : asset === "token" ? sym : ""}
                         invalid={!!amount && !!errors.amount}
                       />
                     </Field>
@@ -467,7 +471,7 @@ function Composer({ project: p, bounds }: { project: ProjectView; bounds: Bounds
                       autoComplete="off"
                       value={amount}
                       onChange={(e) => setAmount(e.target.value)}
-                      suffix="USDC"
+                      suffix={qSym}
                       invalid={!!amount && !!errors.amount}
                     />
                   </Field>
@@ -504,7 +508,7 @@ function Composer({ project: p, bounds }: { project: ProjectView; bounds: Bounds
                 {kind === "Buyback" && (
                   <>
                     <Field
-                      label="USDC to spend"
+                      label={`${qSym} to spend`}
                       htmlFor="bb"
                       error={amount ? errors.amount : undefined}
                       hint={`Treasury has ${formatUsd(p.availableQuote)} available`}
@@ -515,7 +519,7 @@ function Composer({ project: p, bounds }: { project: ProjectView; bounds: Bounds
                         autoComplete="off"
                         value={amount}
                         onChange={(e) => setAmount(e.target.value)}
-                        suffix="USDC"
+                        suffix={qSym}
                         invalid={!!amount && !!errors.amount}
                       />
                     </Field>
@@ -543,7 +547,13 @@ function Composer({ project: p, bounds }: { project: ProjectView; bounds: Bounds
                 )}
 
                 {kind === "UpdateConfig" && (
-                  <ConfigEditor cfg={cfg} setCfg={setCfg} errors={errors} bounds={bounds} />
+                  <ConfigEditor
+                    cfg={cfg}
+                    setCfg={setCfg}
+                    errors={errors}
+                    bounds={bounds}
+                    quoteSymbol={qSym}
+                  />
                 )}
 
                 {kind === "SetFounder" && (
@@ -646,6 +656,9 @@ function Composer({ project: p, bounds }: { project: ProjectView; bounds: Bounds
                 >
                   {shortBond ? `Need ${formatUsd(bond)} for the bond` : "Submit proposal"}
                 </Button>
+                {bond > 0n && (
+                  <QuoteFaucet quote={p.quote} balance={bal.data ? usdcBal : undefined} />
+                )}
               </div>
             </Panel>
           </aside>

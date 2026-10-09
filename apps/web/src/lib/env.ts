@@ -4,6 +4,7 @@ import {
   IndexerClient,
   localAnvil,
   monadTestnet,
+  quoteSymbol,
   type DeploymentRecord,
 } from "@moneta/sdk";
 
@@ -31,4 +32,9 @@ export const indexer = new IndexerClient(INDEXER_URL);
 export function requireDeployment(): DeploymentRecord {
   if (!deployment) throw new Error(`Moneta is not deployed on chain ${CHAIN_ID}`);
   return deployment;
+}
+
+/** Display symbol of a raise's or project's quote on this deployment: "USDC", or "mUSDC" for the test quote. */
+export function quoteSym(token: string | undefined): string {
+  return quoteSymbol(deployment, token);
 }

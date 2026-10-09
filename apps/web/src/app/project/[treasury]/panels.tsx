@@ -19,7 +19,8 @@ import { SlippageControl, useSlippage } from "@/components/market/Slippage";
 import { Button } from "@/components/ui/button";
 import { KV, Panel } from "@/components/ui/display";
 import { AmountInput, Segmented } from "@/components/ui/forms";
-import { requireDeployment } from "@/lib/env";
+import { QuoteFaucet } from "@/components/tx/QuoteFaucet";
+import { quoteSym, requireDeployment } from "@/lib/env";
 import { useBalances, useChainNow } from "@/lib/hooks/chain";
 import { useMonetaTx } from "@/lib/hooks/tx";
 
@@ -42,6 +43,7 @@ export function SwapPanel({ project }: { project: ProjectView }) {
   const client = usePublicClient() as PublicClient | undefined;
   const bal = useBalances(tx.address, [project.quote, project.token]);
   const sym = project.tokenMeta.symbol;
+  const qSym = quoteSym(project.quote);
   const buy = side === "buy";
   const inDecimals = buy ? 6 : 18;
   const parsed = parse(amount, inDecimals);
@@ -77,7 +79,7 @@ export function SwapPanel({ project }: { project: ProjectView }) {
       );
       const permit = await tx.permit(tokenIn, d.router, parsed).catch(() => undefined);
       if (permit === undefined) return;
-      if (!permit && !(await tx.ensureAllowance(tokenIn, d.router, parsed, buy ? "USDC" : sym)))
+      if (!permit && !(await tx.ensureAllowance(tokenIn, d.router, parsed, buy ? qSym : sym)))
         return;
       const ok = await tx.run({
         title: buy
@@ -107,10 +109,10 @@ export function SwapPanel({ project }: { project: ProjectView }) {
           ]}
         />
         <AmountInput
-          label={buy ? "USDC to spend" : `${sym} to sell`}
+          label={buy ? `${qSym} to spend` : `${sym} to sell`}
           value={amount}
           onChange={setAmount}
-          symbol={buy ? "USDC" : sym}
+          symbol={buy ? qSym : sym}
           invalid={insufficient}
           balanceLabel={
             tx.isConnected
@@ -148,6 +150,7 @@ export function SwapPanel({ project }: { project: ProjectView }) {
         >
           {insufficient ? "Insufficient balance" : buy ? `Buy ${sym}` : `Sell ${sym}`}
         </Button>
+        {buy && <QuoteFaucet quote={project.quote} balance={bal.data ? balance : undefined} />}
       </div>
     </Panel>
   );

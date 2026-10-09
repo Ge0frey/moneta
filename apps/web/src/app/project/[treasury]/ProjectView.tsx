@@ -26,7 +26,7 @@ import { StatTile } from "@/components/ui/cards";
 import { AddressChip, PageHeader, Panel } from "@/components/ui/display";
 import { StatusChip, Tag } from "@/components/ui/pills";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/states";
-import { indexer } from "@/lib/env";
+import { indexer, quoteSym } from "@/lib/env";
 import { useChainNow, useProjectState } from "@/lib/hooks/chain";
 import { INDEXER_POLL_MS } from "@/lib/hooks/indexed";
 import { FounderPanel, RedemptionPanel, SwapPanel } from "./panels";
@@ -76,6 +76,7 @@ export function ProjectView({ treasury }: { treasury: Address }) {
       : big(indexed.data?.lastPrice);
   const raiseScaled = raisePriceToScaled(p.raisePrice);
   const sym = p.tokenMeta.symbol;
+  const qSym = quoteSym(p.quote);
 
   return (
     <>
@@ -90,6 +91,7 @@ export function ProjectView({ treasury }: { treasury: Address }) {
               <StatusChip tone="live" label="Governing" pulse={false} />
             )}
             <Tag>${sym}</Tag>
+            <Tag>{qSym}</Tag>
             {indexed.data && <Tag>{indexed.data.holderCount} holders</Tag>}
           </div>
         }
@@ -127,7 +129,7 @@ export function ProjectView({ treasury }: { treasury: Address }) {
           <StatTile
             label="Treasury"
             value={formatUsd(p.availableQuote, 6, { compact: true })}
-            sub={p.bondsHeld > 0n ? `+ ${formatUsd(p.bondsHeld)} bonds held` : "available USDC"}
+            sub={p.bondsHeld > 0n ? `+ ${formatUsd(p.bondsHeld)} bonds held` : `available ${qSym}`}
           />
           <StatTile
             label="Budget / Month"

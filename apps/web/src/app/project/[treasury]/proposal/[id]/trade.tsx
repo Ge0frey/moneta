@@ -25,7 +25,8 @@ import { usePublicClient } from "wagmi";
 import { Button } from "@/components/ui/button";
 import { KV, Panel } from "@/components/ui/display";
 import { AmountInput, Segmented } from "@/components/ui/forms";
-import { requireDeployment } from "@/lib/env";
+import { QuoteFaucet } from "@/components/tx/QuoteFaucet";
+import { quoteSym, requireDeployment } from "@/lib/env";
 import { useBalances } from "@/lib/hooks/chain";
 import { useMonetaTx } from "@/lib/hooks/tx";
 
@@ -57,6 +58,7 @@ export function TradePanel({ project, view }: { project: ProjectView; view: Prop
   ]);
   const pass = side === "pass";
   const sym = project.tokenMeta.symbol;
+  const qSym = quoteSym(project.quote);
   const pool = pass ? view.passPool! : view.failPool!;
   const buy = mode === "buy";
   const decimals = buy ? 6 : 18;
@@ -102,7 +104,7 @@ export function TradePanel({ project, view }: { project: ProjectView; view: Prop
       if (buy) {
         const permit = await tx.permit(project.quote, d.router, parsed).catch(() => undefined);
         if (permit === undefined) return;
-        if (!permit && !(await tx.ensureAllowance(project.quote, d.router, parsed, "USDC"))) return;
+        if (!permit && !(await tx.ensureAllowance(project.quote, d.router, parsed, qSym))) return;
         ok = await tx.run({
           title: `Buy ${world} with ${formatUsd(parsed)}`,
           request: txs.buyOutcome(
@@ -155,10 +157,10 @@ export function TradePanel({ project, view }: { project: ProjectView; view: Prop
           ]}
         />
         <AmountInput
-          label={buy ? "USDC to spend" : `${world} ${sym} to sell`}
+          label={buy ? `${qSym} to spend` : `${world} ${sym} to sell`}
           value={amount}
           onChange={setAmount}
-          symbol={buy ? "USDC" : `${pass ? "p" : "f"}${sym}`}
+          symbol={buy ? qSym : `${pass ? "p" : "f"}${sym}`}
           invalid={insufficient}
           balanceLabel={
             tx.isConnected
@@ -176,7 +178,7 @@ export function TradePanel({ project, view }: { project: ProjectView; view: Prop
             <KV
               rows={[
                 [
-                  buy ? `${world} ${sym} received` : `${world} USDC received`,
+                  buy ? `${world} ${sym} received` : `${world} ${qSym} received`,
                   buy ? formatToken(q.amountOut, 18) : formatUsd(q.amountOut),
                 ],
                 ["Price impact", formatBps(q.priceImpactBps)],
@@ -191,14 +193,14 @@ export function TradePanel({ project, view }: { project: ProjectView; view: Prop
                     {formatToken(q.amountOut, 18)} {world}-{sym}, redeemable 1:1 for {sym}.
                   </p>
                   <p>
-                    If {other}: your {formatUsd(parsed)} comes back ({other}-USDC redeems 1:1).
+                    If {other}: your {formatUsd(parsed)} comes back ({other}-{qSym} redeems 1:1).
                   </p>
                 </>
               ) : (
                 <p>
-                  {formatUsd(settles)} settles to real USDC by merging with your {other}-USDC
+                  {formatUsd(settles)} settles to real {qSym} by merging with your {other}-{qSym}
                   {q.amountOut > settles
-                    ? `; ${formatUsd(q.amountOut - settles)} stays as ${world}-USDC`
+                    ? `; ${formatUsd(q.amountOut - settles)} stays as ${world}-${qSym}`
                     : ""}
                   .
                 </p>
@@ -217,6 +219,7 @@ export function TradePanel({ project, view }: { project: ProjectView; view: Prop
             ? "Insufficient balance"
             : `${buy ? "Buy" : "Sell"} ${pass ? "PASS ▲" : "FAIL ▼"}`}
         </Button>
+        {buy && <QuoteFaucet quote={project.quote} balance={bal.data ? balance : undefined} />}
       </div>
     </Panel>
   );
@@ -233,12 +236,13 @@ export function PositionsPanel({ project, view }: { project: ProjectView; view: 
   );
   if (!t || !tx.isConnected) return null;
   const sym = project.tokenMeta.symbol;
+  const qSym = quoteSym(project.quote);
   const b = (a: string) => bal.data?.[a as `0x${string}`] ?? 0n;
   const rows: [string, string][] = [
     [`▲ PASS-${sym}`, formatToken(b(t.passToken), 18)],
     [`▼ FAIL-${sym}`, formatToken(b(t.failToken), 18)],
-    ["▲ PASS-USDC", formatUsd(b(t.passQuote))],
-    ["▼ FAIL-USDC", formatUsd(b(t.failQuote))],
+    [`▲ PASS-${qSym}`, formatUsd(b(t.passQuote))],
+    [`▼ FAIL-${qSym}`, formatUsd(b(t.failQuote))],
   ];
   const any = b(t.passToken) + b(t.failToken) + b(t.passQuote) + b(t.failQuote) > 0n;
   const resolved = view.outcome !== Outcome.Unresolved;

@@ -9,6 +9,7 @@ import {
   formatTokenPrice,
   formatUsd,
   monetaFactoryAbi,
+  quoteAssets,
   txs,
   type FactoryState,
   type RaiseParams,
@@ -26,7 +27,7 @@ import { MemoEditor } from "@/components/ui/memo-editor";
 import { Eyebrow } from "@/components/ui/pills";
 import { ErrorState, Skeleton } from "@/components/ui/states";
 import { cn } from "@/lib/cn";
-import { IS_TESTNET, requireDeployment } from "@/lib/env";
+import { IS_TESTNET, quoteSym, requireDeployment } from "@/lib/env";
 import { useFactoryState } from "@/lib/hooks/chain";
 import { useMonetaTx } from "@/lib/hooks/tx";
 import { ConfigEditor } from "@/components/governance/ConfigEditor";
@@ -70,6 +71,9 @@ function Wizard({ factory }: { factory: FactoryState }) {
   const [showErrors, setShowErrors] = useState<Record<number, boolean>>({});
   const [showGov, setShowGov] = useState(false);
   const [busy, setBusy] = useState(false);
+  const quotes = quoteAssets(requireDeployment());
+  const [quote, setQuote] = useState<Address>(quotes[0]!.address);
+  const qSym = quoteSym(quote);
   const founder = d.founder || tx.address || "";
   const draft = { ...d, founder };
   const v = validate(draft, b);
@@ -99,7 +103,7 @@ function Wizard({ factory }: { factory: FactoryState }) {
       // `start` below block.timestamp is normalised to "now" by the factory; 15s slack covers inclusion latency.
       const end = now + Math.min(v.params.windowSec + 15, b.maxRaiseWindow);
       const { windowSec: _w, ...rest } = v.params;
-      const params: RaiseParams = { ...rest, quote: requireDeployment().quote, start: 0, end };
+      const params: RaiseParams = { ...rest, quote, start: 0, end };
       const receipt = await tx.run({
         title: `Publish ${params.symbol} raise`,
         request: txs.createRaise(requireDeployment(), params, memo),
@@ -125,7 +129,7 @@ function Wizard({ factory }: { factory: FactoryState }) {
   const summaries: ReactNode[] = [
     d.name ? `${d.name} · $${d.symbol}` : "",
     v.price && v.min && v.max
-      ? `${formatTokenPrice(v.price)} · ${formatUsd(v.min, 6, { compact: true })} to ${formatUsd(v.max, 6, { compact: true })} · ${formatDuration(v.windowSec)}`
+      ? `${qSym} · ${formatTokenPrice(v.price)} · ${formatUsd(v.min, 6, { compact: true })} to ${formatUsd(v.max, 6, { compact: true })} · ${formatDuration(v.windowSec)}`
       : "",
     `${d.tranches.length} tranche${d.tranches.length === 1 ? "" : "s"} · ${v.budget !== undefined ? formatUsd(v.budget) : "?"}/mo budget${d.perf.length ? ` · ${d.perf.length} perf` : ""}`,
     `${byteLen(memo).toLocaleString()} bytes`,
@@ -240,6 +244,26 @@ function Wizard({ factory }: { factory: FactoryState }) {
 
                     {i === 1 && (
                       <div className="grid gap-5 sm:grid-cols-2">
+                        {quotes.length > 1 && (
+                          <div className="flex flex-col gap-1.5 sm:col-span-2">
+                            <p className="body-sm font-medium text-fg">Raise in</p>
+                            <div className="sm:w-[320px]">
+                              <Segmented
+                                label="Raise currency"
+                                value={quote}
+                                onChange={setQuote}
+                                options={quotes.map((q) => ({ value: q.address, label: q.symbol }))}
+                              />
+                            </div>
+                            <p className="caption text-fg-3">
+                              {quotes.find((q) => q.address === quote)?.test
+                                ? `${qSym} is a test token anyone can mint, 10,000 at a time, from the raise page. Use it for demos and large-amount testing.`
+                                : IS_TESTNET
+                                  ? "Circle testnet USDC. Its faucet gives 20 USDC every 2 hours."
+                                  : "The protocol's primary quote asset."}
+                            </p>
+                          </div>
+                        )}
                         <Field
                           label="Price per token"
                           htmlFor="price"
@@ -252,7 +276,7 @@ function Wizard({ factory }: { factory: FactoryState }) {
                             autoComplete="off"
                             value={d.price}
                             onChange={(e) => set("price", e.target.value)}
-                            suffix="USDC"
+                            suffix={qSym}
                             invalid={!!err("price", 1)}
                           />
                         </Field>
@@ -297,7 +321,7 @@ function Wizard({ factory }: { factory: FactoryState }) {
                             autoComplete="off"
                             value={d.min}
                             onChange={(e) => set("min", e.target.value)}
-                            suffix="USDC"
+                            suffix={qSym}
                             invalid={!!err("min", 1)}
                           />
                         </Field>
@@ -313,7 +337,7 @@ function Wizard({ factory }: { factory: FactoryState }) {
                             autoComplete="off"
                             value={d.max}
                             onChange={(e) => set("max", e.target.value)}
-                            suffix="USDC"
+                            suffix={qSym}
                             invalid={!!err("max", 1)}
                           />
                         </Field>
@@ -357,7 +381,7 @@ function Wizard({ factory }: { factory: FactoryState }) {
                             autoComplete="off"
                             value={d.budget}
                             onChange={(e) => set("budget", e.target.value)}
-                            suffix="USDC"
+                            suffix={qSym}
                             invalid={!!err("budget", 2)}
                           />
                         </Field>
@@ -558,7 +582,7 @@ function Wizard({ factory }: { factory: FactoryState }) {
                           <p className="mono-xs mt-1 text-fg-3">
                             Trading {formatDuration(Number(d.gov.duration) || 0)} after a{" "}
                             {formatDuration(Number(d.gov.warmup) || 0)} warm-up · bond {d.gov.bond}{" "}
-                            USDC · only a passed UpdateConfig can change these later
+                            {qSym} · only a passed UpdateConfig can change these later
                           </p>
                           {Object.keys(errors).some((k) => k.startsWith("gov.")) &&
                             showErrors[2] &&
@@ -573,6 +597,7 @@ function Wizard({ factory }: { factory: FactoryState }) {
                                 cfg={d.gov}
                                 setCfg={(c) => set("gov", c)}
                                 bounds={b}
+                                quoteSymbol={qSym}
                                 errors={Object.fromEntries(
                                   Object.entries(errors)
                                     .filter(([k]) => k.startsWith("gov."))
@@ -595,7 +620,7 @@ function Wizard({ factory }: { factory: FactoryState }) {
                       />
                     )}
 
-                    {i === 4 && <Review v={v} factory={factory} />}
+                    {i === 4 && <Review v={v} factory={factory} qSym={qSym} />}
 
                     {i === 3 && errors.memo && showErrors[3] && (
                       <p role="alert" className="caption mt-2 text-fail">
@@ -637,7 +662,7 @@ function Wizard({ factory }: { factory: FactoryState }) {
         </ol>
         {IS_TESTNET && (
           <p className="mono-xs mt-4 text-fg-3">
-            Testnet raises use Circle testnet USDC.{" "}
+            USDC raises use Circle testnet USDC.{" "}
             <a
               href={FAUCETS.usdc}
               target="_blank"
@@ -647,6 +672,7 @@ function Wizard({ factory }: { factory: FactoryState }) {
               Get USDC ↗
             </a>{" "}
             ·{" "}
+            {quotes.length > 1 && <>mUSDC raises use a test token minted from the raise page · </>}
             <a
               href={FAUCETS.mon}
               target="_blank"
@@ -707,7 +733,15 @@ function DurationField({
   );
 }
 
-function Review({ v, factory }: { v: ReturnType<typeof validate>; factory: FactoryState }) {
+function Review({
+  v,
+  factory,
+  qSym,
+}: {
+  v: ReturnType<typeof validate>;
+  factory: FactoryState;
+  qSym: string;
+}) {
   if (!v.params) {
     return (
       <p className="body-sm text-warning">
@@ -753,8 +787,8 @@ function Review({ v, factory }: { v: ReturnType<typeof validate>; factory: Facto
             {p.name} · ${sym}
           </p>
           <p className="body-sm mt-2 text-fg-2">
-            {formatTokenPrice(p.price)} per token · {formatDuration(p.windowSec)} window · founder{" "}
-            {p.founder.slice(0, 6)}…{p.founder.slice(-4)}
+            {formatTokenPrice(p.price)} per token in {qSym} · {formatDuration(p.windowSec)} window ·
+            founder {p.founder.slice(0, 6)}…{p.founder.slice(-4)}
           </p>
         </Panel>
         <Panel className="bg-surface-2 p-5">

@@ -18,6 +18,7 @@
     "contracts:build": "pnpm --filter @moneta/contracts build",
     "deploy:local": "pnpm --filter @moneta/contracts deploy:local && pnpm --filter @moneta/sdk generate",
     "deploy:testnet": "pnpm --filter @moneta/contracts deploy:testnet && pnpm --filter @moneta/sdk generate",
+    "deploy:test-quote:testnet": "pnpm --filter @moneta/contracts deploy:test-quote:testnet && pnpm --filter @moneta/sdk generate",
     "seed:local": "pnpm --filter @moneta/bots seed --network local",
     "seed:testnet": "pnpm --filter @moneta/bots seed --network testnet",
     "scenario": "pnpm --filter @moneta/bots scenario",

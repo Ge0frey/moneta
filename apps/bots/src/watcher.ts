@@ -3,6 +3,7 @@ import {
   monetaAmmAbi,
   Outcome,
   ProposalStatus,
+  quoteAssets,
   RaiseStatus,
   readRaise,
   treasuryAbi,
@@ -42,40 +43,42 @@ export async function checkOnce(env: BotEnv): Promise<{ critical: number; warnin
   const pc = env.publicClient;
   const t = await now(env);
 
-  // Router never holds funds
-  const routerUsdc = await pc.readContract({
-    address: env.deployment.quote,
-    abi: erc20Abi,
-    functionName: "balanceOf",
-    args: [env.deployment.router],
-  });
-  if (routerUsdc > 0n) await fire("critical", `router holds ${routerUsdc} USDC (must be 0)`);
-
-  // AMM balances cover reserves (USDC side, all pools)
+  // Per quote asset (USDC, and mUSDC when deployed): the router never holds funds, and the AMM's balance covers
+  // the quote side of every pool that trades against it.
   const poolCount = await pc.readContract({
     address: env.deployment.amm,
     abi: monetaAmmAbi,
     functionName: "poolCount",
   });
-  let usdcReserves = 0n;
+  const pools = [];
   for (let i = 1n; i <= poolCount; i++) {
-    const p = await pc.readContract({
-      address: env.deployment.amm,
-      abi: monetaAmmAbi,
-      functionName: "getPool",
-      args: [i],
-    });
-    if (p.quote.toLowerCase() === env.deployment.quote.toLowerCase())
-      usdcReserves += p.reserveQuote;
+    pools.push(
+      await pc.readContract({
+        address: env.deployment.amm,
+        abi: monetaAmmAbi,
+        functionName: "getPool",
+        args: [i],
+      }),
+    );
   }
-  const ammUsdc = await pc.readContract({
-    address: env.deployment.quote,
-    abi: erc20Abi,
-    functionName: "balanceOf",
-    args: [env.deployment.amm],
-  });
-  if (ammUsdc < usdcReserves)
-    await fire("critical", `AMM USDC ${ammUsdc} < reserves ${usdcReserves}`);
+  for (const q of quoteAssets(env.deployment)) {
+    const balanceOf = (who: Address) =>
+      pc.readContract({
+        address: q.address,
+        abi: erc20Abi,
+        functionName: "balanceOf",
+        args: [who],
+      });
+    const routerUsdc = await balanceOf(env.deployment.router);
+    if (routerUsdc > 0n)
+      await fire("critical", `router holds ${routerUsdc} ${q.symbol} (must be 0)`);
+    const usdcReserves = pools
+      .filter((p) => p.quote.toLowerCase() === q.address.toLowerCase())
+      .reduce((a, p) => a + p.reserveQuote, 0n);
+    const ammUsdc = await balanceOf(env.deployment.amm);
+    if (ammUsdc < usdcReserves)
+      await fire("critical", `AMM ${q.symbol} ${ammUsdc} < reserves ${usdcReserves}`);
+  }
 
   // Liveness: raises
   for (const raise of await listRaises(env)) {

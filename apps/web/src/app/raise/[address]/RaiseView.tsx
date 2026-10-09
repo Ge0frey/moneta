@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  FAUCETS,
   formatBps,
   formatDuration,
   formatToken,
@@ -31,7 +30,8 @@ import {
 import { AmountInput } from "@/components/ui/forms";
 import { StatusChip, Tag } from "@/components/ui/pills";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/states";
-import { indexer, IS_TESTNET } from "@/lib/env";
+import { QuoteFaucet } from "@/components/tx/QuoteFaucet";
+import { indexer, quoteSym } from "@/lib/env";
 import { useChainNow, useRaiseState } from "@/lib/hooks/chain";
 import { INDEXER_POLL_MS } from "@/lib/hooks/indexed";
 import { useMonetaTx } from "@/lib/hooks/tx";
@@ -85,6 +85,7 @@ export function RaiseView({ address }: { address: Address }) {
           <div className="flex flex-wrap items-center gap-2">
             {statusChip}
             <Tag>${meta?.symbol ?? "…"}</Tag>
+            <Tag>{quoteSym(r.quote)}</Tag>
           </div>
         }
         title={meta?.name ?? "Raise"}
@@ -235,6 +236,7 @@ function RaiseActions({
   const r = chain.data;
   if (!r) return null;
   const acct = r.account;
+  const qSym = quoteSym(r.quote);
 
   if (!tx.isConnected) {
     return (
@@ -262,7 +264,7 @@ function RaiseActions({
         const request = permit
           ? txs.contributeWithPermit(address, parsed, permit)
           : txs.contribute(address, parsed);
-        if (!permit && !(await tx.ensureAllowance(r.quote, address, parsed, "USDC"))) return;
+        if (!permit && !(await tx.ensureAllowance(r.quote, address, parsed, qSym))) return;
         const ok = await tx.run({ title: `Contribute ${formatUsd(parsed)}`, request });
         if (ok) setAmount("");
       } finally {
@@ -272,10 +274,10 @@ function RaiseActions({
     return (
       <div className="flex flex-col gap-4">
         <AmountInput
-          label="Contribution in USDC"
+          label={`Contribution in ${qSym}`}
           value={amount}
           onChange={setAmount}
-          symbol="USDC"
+          symbol={qSym}
           invalid={insufficient}
           balanceLabel={acct ? `Balance ${formatUsd(acct.quoteBalance)}` : undefined}
           onMax={acct ? () => setAmount((Number(acct.quoteBalance) / 1e6).toString()) : undefined}
@@ -296,18 +298,9 @@ function RaiseActions({
           loading={busy}
           onClick={contribute}
         >
-          {insufficient ? "Insufficient USDC" : "Contribute"}
+          {insufficient ? `Insufficient ${qSym}` : "Contribute"}
         </Button>
-        {IS_TESTNET && acct && acct.quoteBalance === 0n && (
-          <a
-            href={FAUCETS.usdc}
-            target="_blank"
-            rel="noreferrer"
-            className="mono-xs text-accent hover:text-accent-hover"
-          >
-            Get testnet USDC (Circle faucet) ↗
-          </a>
-        )}
+        <QuoteFaucet quote={r.quote} balance={acct?.quoteBalance} />
       </div>
     );
   }
@@ -358,7 +351,7 @@ function RaiseActions({
         ✓ Claimed.{" "}
         {r.status === RaiseStatus.Succeeded
           ? "Your tokens are in your wallet."
-          : "Your USDC was refunded."}
+          : `Your ${qSym} was refunded.`}
       </p>
     );
   return (

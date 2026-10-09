@@ -16,6 +16,8 @@
     "lint": "forge fmt --check",
     "deploy:local": "bash script/deploy.sh local",
     "deploy:testnet": "bash script/deploy.sh testnet",
+    "deploy:test-quote:local": "bash script/test-quote.sh local",
+    "deploy:test-quote:testnet": "bash script/test-quote.sh testnet",
     "verify:testnet": "bash script/verify.sh",
     "slither": "slither . --config-file slither.config.json --fail-high",
     "aderyn": "npx -y @cyfrin/aderyn@0.6.8 . --src src --path-excludes src/local -o aderyn-report.md"

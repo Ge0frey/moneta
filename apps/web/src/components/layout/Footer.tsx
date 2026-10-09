@@ -35,6 +35,9 @@ const COLUMNS: { title: string; items: Item[] }[] = [
             { label: "USDC faucet", href: FAUCETS.usdc, external: true },
           ]
         : []),
+      ...(deployment?.testQuote
+        ? [{ label: "mUSDC test funds", href: "/portfolio#test-funds" }]
+        : []),
       ...(deployment && explorerAddressUrl(CHAIN_ID, deployment.factory)
         ? [
             {

@@ -4,10 +4,13 @@ import {
   actionTitle,
   big,
   decodeAction,
+  FAUCETS,
   formatScaledPrice,
   formatToken,
   formatUsd,
+  isQuoteAsset,
   PRICE_SCALE,
+  quoteAssets,
   readProject,
   readRaise,
   RaiseStatus,
@@ -27,7 +30,8 @@ import { StatTile } from "@/components/ui/cards";
 import { PageHeader } from "@/components/ui/display";
 import { Chip, Eyebrow, StatusChip } from "@/components/ui/pills";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/states";
-import { indexer, requireDeployment } from "@/lib/env";
+import { MintTestQuote } from "@/components/tx/QuoteFaucet";
+import { deployment, indexer, IS_TESTNET, requireDeployment } from "@/lib/env";
 import { useBalances } from "@/lib/hooks/chain";
 import { INDEXER_POLL_MS } from "@/lib/hooks/indexed";
 import { useMounted } from "@/lib/hooks/mounted";
@@ -156,6 +160,7 @@ export function PortfolioView() {
           sub="wound-down treasuries"
         />
       </div>
+      {(IS_TESTNET || deployment?.testQuote) && <TestFunds account={tx.address!} />}
       <div className="-ml-1 flex flex-wrap gap-2 pb-6" role="group" aria-label="Portfolio sections">
         {TABS.map((t) => (
           <Chip key={t.id} active={tab === t.id} onClick={() => setTab(t.id)}>
@@ -184,6 +189,43 @@ export function PortfolioView() {
         )}
       </Section>
     </>
+  );
+}
+
+/** Test funds: Circle USDC from its faucet (testnet), the test quote (mUSDC) minted in one click. */
+function TestFunds({ account }: { account: Address }) {
+  const quotes = quoteAssets(requireDeployment());
+  const bal = useBalances(
+    account,
+    quotes.map((q) => q.address),
+  );
+  return (
+    <section
+      id="test-funds"
+      aria-label="Test funds"
+      className="mb-6 flex flex-wrap items-center gap-x-8 gap-y-3 rounded-[16px] border border-line-subtle bg-surface-1 px-6 py-4"
+    >
+      <p className="mono-xs text-fg-3 uppercase">Test funds</p>
+      {quotes.map((q) => (
+        <div key={q.address} className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <span className="body-sm tabular">
+            {bal.data ? formatToken(bal.data[q.address] ?? 0n, 6, q.symbol) : `… ${q.symbol}`}
+          </span>
+          {q.test ? (
+            <MintTestQuote quote={q.address} />
+          ) : IS_TESTNET ? (
+            <a
+              href={FAUCETS.usdc}
+              target="_blank"
+              rel="noreferrer"
+              className="mono-xs text-accent hover:text-accent-hover"
+            >
+              Circle faucet ↗
+            </a>
+          ) : null}
+        </div>
+      ))}
+    </section>
   );
 }
 
@@ -363,7 +405,7 @@ function Positions({
             .filter((p) => p.side === side)
             .map((p) => {
               const bal = balances.data?.[p.token as Address] ?? big(p.balance);
-              const isQuote = p.collateral.toLowerCase() === d.quote.toLowerCase();
+              const isQuote = isQuoteAsset(d, p.collateral);
               return bal > 0n ? (
                 <span key={p.token} className="block">
                   {isQuote ? formatUsd(bal) : formatToken(bal, 18, pr.project.symbol)}

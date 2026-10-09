@@ -16,6 +16,7 @@ import {
   monetaAmmAbi,
   monetaFactoryAbi,
   monetaRouterAbi,
+  monetaUsdcAbi,
   raiseAbi,
   treasuryAbi,
 } from "./generated/abis";
@@ -47,6 +48,9 @@ const req = (
 export const txs = {
   approve: (token: Address, spender: Address, amount: bigint) =>
     req(token, erc20Abi as Abi, "approve", [spender, amount]),
+  /** Open mint on MonetaUSDC: the test quote (mUSDC) anywhere, the primary quote on local chains only. */
+  mintTestQuote: (token: Address, to: Address, amount: bigint) =>
+    req(token, monetaUsdcAbi as Abi, "mint", [to, amount]),
 
   createRaise: (d: DeploymentRecord, p: RaiseParams, memo: string) =>
     req(d.factory, monetaFactoryAbi as Abi, "createRaise", [p, memo]),

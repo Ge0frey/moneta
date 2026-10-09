@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Deploy Moneta. Usage: script/deploy.sh <local|testnet> [--force]
-#   local   → anvil (pnpm dev:chain), anvil dev key, MonetaUSDC auto-deployed
+#   local   → anvil (pnpm dev:chain), anvil dev key, MonetaUSDC auto-deployed, plus the mUSDC test quote
 #   testnet → Monad testnet (10143), encrypted Foundry keystore ($DEPLOYER_ACCOUNT), Circle USDC
+#             (add the mUSDC test quote with script/test-quote.sh testnet)
 # Idempotent: refuses to redeploy over a live deployment unless --force (a testnet reset wipes code → redeploys).
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -49,6 +50,7 @@ if [ -f "$DEPLOYMENT" ] && [ "$FORCE" != "--force" ]; then
   CODE=$(cast code "$FACTORY" --rpc-url "$RPC" 2>/dev/null || echo 0x)
   if [ "$CODE" != "0x" ]; then
     echo "✓ Moneta already live on chain $CHAIN_ID at factory $FACTORY (use --force to redeploy)"
+    if [ "$NETWORK" = local ]; then bash script/test-quote.sh local; fi
     exit 0
   fi
   echo "• Previous deployment has no code (chain reset?) — redeploying"
@@ -57,3 +59,4 @@ fi
 mkdir -p deployments
 NETWORK="$NETWORK" forge script script/Deploy.s.sol:Deploy --rpc-url "$RPC" --broadcast "${AUTH[@]}"
 echo "✓ Deployment written to packages/contracts/$DEPLOYMENT"
+if [ "$NETWORK" = local ]; then bash script/test-quote.sh local; fi

@@ -7,6 +7,14 @@ import {
 } from "viem";
 import { describe, expect, it } from "vitest";
 import { actionTitle, decodeAction, encodeAction, type ProposalAction } from "../src/actions";
+import {
+  TEST_QUOTE_SYMBOL,
+  isTestQuote,
+  isQuoteAsset,
+  quoteAssets,
+  quoteSymbol,
+  type DeploymentRecord,
+} from "../src/addresses";
 import { ActionType, PRICE_SCALE } from "../src/constants";
 import { decodeRevertData, MONETA_ERRORS_ABI } from "../src/errors";
 import {
@@ -189,5 +197,29 @@ describe("permit", () => {
     expect(signed?.message.deadline).toBe(chainTs + PERMIT_TTL_SECONDS);
     expect(p.enabled).toBe(true);
     expect(p.v).toBe(27);
+  });
+});
+
+describe("quote assets", () => {
+  const C = getAddress("0x00000000000000000000000000000000000000cc");
+  const base = { quote: A } as DeploymentRecord;
+  const withTest = { quote: A, testQuote: B } as DeploymentRecord;
+
+  it("lists the primary quote first and the test quote only when deployed", () => {
+    expect(quoteAssets(base)).toEqual([{ address: A, symbol: "USDC", test: false }]);
+    expect(quoteAssets(withTest).map((q) => q.symbol)).toEqual(["USDC", TEST_QUOTE_SYMBOL]);
+  });
+
+  it("labels and recognises quotes case-insensitively", () => {
+    expect(quoteSymbol(withTest, B.toLowerCase())).toBe("mUSDC");
+    expect(quoteSymbol(withTest, A)).toBe("USDC");
+    expect(quoteSymbol(base, B)).toBe("USDC");
+    expect(quoteSymbol(undefined, B)).toBe("USDC");
+    expect(isTestQuote(withTest, B.toLowerCase())).toBe(true);
+    expect(isTestQuote(base, B)).toBe(false);
+    expect(isQuoteAsset(withTest, A.toLowerCase())).toBe(true);
+    expect(isQuoteAsset(withTest, B)).toBe(true);
+    expect(isQuoteAsset(withTest, C)).toBe(false);
+    expect(isQuoteAsset(base, B)).toBe(false);
   });
 });

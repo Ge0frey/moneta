@@ -84,7 +84,7 @@ contract TreasuryTest is Test {
         amm = new MonetaAMM(address(this), feeTo, 3333);
         vault = new ConditionalVault(address(new ConditionalToken()));
         vault.initialize(address(amm), routerStub);
-        usdc = new MonetaUSDC();
+        usdc = new MonetaUSDC("USD Coin", "USDC");
         factory = new MinimalFactory();
 
         token = ProjectToken(Clones.clone(address(new ProjectToken())));
