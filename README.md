@@ -1,21 +1,28 @@
-<img src="apps/web/public/og.png" alt="Moneta. Raise In Public. Spend By Verdict." />
-
 # Moneta
 
 ### Where unicorns raise their first round.
 
 Moneta is the initial funding platform for crypto startups on Monad. Founders raise in public, backers fund the plan, and the market decides how every dollar gets spent. All powered by futarchy.
 
-**[Launch the app](https://www.monetafutarchy.xyz)** · [Read the docs](https://www.monetafutarchy.xyz/docs) · [Run it locally](#run-it-locally)
+## Quick links
+
+- Demo video: https://youtu.be/jirW6oq9C9w
+- Pitch video: https://youtu.be/8bAW0iubX2U
+- Protocol Status: https://www.monetafutarchy.xyz/status
+- App: https://www.monetafutarchy.xyz
+- Docs: https://www.monetafutarchy.xyz/docs
+- X: https://x.com/monetaxyz
 
 ---
+
+<img src="apps/web/public/og.png" alt="Moneta. Raise In Public. Spend By Verdict." />
 
 ## The Problem
 
 A crypto founder raising a first round has two options today, and both are broken.
 
-- **Venture capital** is slow, private and gated by who you know. The community only gets in at launch, often as exit liquidity.
-- **Token launchpads** are fast but built for hype. Once the money lands, nothing holds the founder to the plan, and backers can only sell.
+ **Venture capital** is slow, private and gated by who you know. The community only gets in at launch, often as exit liquidity.
+ **Token launchpads** are fast but built for hype. Once the money lands, nothing holds the founder to the plan, and backers can only sell.
 
 Neither one ties the money to the work.
 
@@ -70,6 +77,19 @@ Moneta is live on Monad testnet at **[monetafutarchy.xyz](https://www.monetafuta
    - **USDC:** Circle's test USDC from [faucet.circle.com](https://faucet.circle.com), 20 every 2 hours.
    - **mUSDC:** Moneta's test token for large amounts. Mint 10,000 per click from Portfolio → Test funds or from any mUSDC raise or market.
 4. Back a raise, trade a proposal, or launch your own.
+
+## Contracts
+
+Deployed on Monad testnet (chain ID `10143`). Each raise, treasury and project token is its own contract, created by the factory. The full address book is in [`packages/contracts/deployments/10143.json`](packages/contracts/deployments/10143.json).
+
+| Contract           | Address                                                                                                                                  |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Factory            | [`0xA1ED7688cB6F0576E7955483d8a35364Af01de06`](https://testnet.monadvision.com/address/0xA1ED7688cB6F0576E7955483d8a35364Af01de06) |
+| AMM                | [`0xE21e8f9984f24fA8204DC822dCEBe96a8CB08F41`](https://testnet.monadvision.com/address/0xE21e8f9984f24fA8204DC822dCEBe96a8CB08F41) |
+| Vault              | [`0x694F10e57D385B1CbB692515Fd2A0Efd4302F7Cc`](https://testnet.monadvision.com/address/0x694F10e57D385B1CbB692515Fd2A0Efd4302F7Cc) |
+| Router             | [`0x21eA0c029E925f6BD95f607a2CF8B2717638F4A9`](https://testnet.monadvision.com/address/0x21eA0c029E925f6BD95f607a2CF8B2717638F4A9) |
+| Quote (USDC)       | [`0x534b2f3A21130d7a60830c2Df862319e593943A3`](https://testnet.monadvision.com/address/0x534b2f3A21130d7a60830c2Df862319e593943A3) |
+| Test quote (mUSDC) | [`0xa5c5fa04cF8b31F783f860D9aF779b172751580A`](https://testnet.monadvision.com/address/0xa5c5fa04cF8b31F783f860D9aF779b172751580A) |
 
 ## Run It Locally
 
