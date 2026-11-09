@@ -5,6 +5,21 @@ import { Ledger } from "@/components/landing/Live";
 import { Origin } from "@/components/landing/Origin";
 import { BuiltWith, ClosingCard, Roadmap } from "@/components/landing/Static";
 import { Verdict } from "@/components/landing/Verdict";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { pageMetadata } from "@/lib/seo";
+import { CARD_TITLE, HOME_DESCRIPTION, HOME_TITLE } from "@/lib/site";
+import { siteGraph } from "@/lib/structured-data";
+
+export const metadata = pageMetadata({
+  title: HOME_TITLE,
+  absolute: true,
+  cardTitle: CARD_TITLE,
+  description: HOME_DESCRIPTION,
+  path: "/",
+});
+
+/** ISR: the Ledger's figures and project cards are server-rendered and refreshed every minute. */
+export const revalidate = 60;
 
 /**
  * Landing page — narrative frame (1000px, 4 columns), read as numbered plates:
@@ -14,6 +29,7 @@ import { Verdict } from "@/components/landing/Verdict";
 export default function Landing() {
   return (
     <div className="overflow-x-clip">
+      <JsonLd data={siteGraph()} />
       <Frame variant="narrative">
         <Hero />
         <Section mark="cross">

@@ -1,16 +1,25 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { Frame, Section } from "@/components/layout/Frame";
-import { AddressChip, PageHeader } from "@/components/ui/display";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { ServerAddressChip } from "@/components/ui/address-chip";
+import { PageHeader } from "@/components/ui/page-header";
 import { Eyebrow } from "@/components/ui/pills";
 import { CHAIN, deployment } from "@/lib/env";
+import { pageMetadata } from "@/lib/seo";
+import { article, breadcrumbs } from "@/lib/structured-data";
 
-export const metadata: Metadata = {
-  title: "Docs",
-  description:
-    "How Moneta works: permissionless raises, market-governed treasuries, decision markets and lagging-TWAP verdicts on Monad.",
-};
+const TITLE = "How Moneta Works: Raises, Verdicts and Treasuries";
+const DESCRIPTION =
+  "How Moneta works: fixed-price raises with refunds, treasuries no one controls, PASS/FAIL decision markets and lagging-TWAP verdicts on Monad.";
+
+export const metadata = pageMetadata({
+  title: TITLE,
+  description: DESCRIPTION,
+  path: "/docs",
+  image: null, // colocated opengraph-image
+  type: "article",
+});
 
 const TOC = [
   ["overview", "Overview"],
@@ -117,6 +126,22 @@ const CONTRACTS: [string, keyof NonNullable<typeof deployment> | null, string][]
 export default function DocsPage() {
   return (
     <Frame variant="narrative">
+      <JsonLd
+        data={[
+          article({
+            type: "TechArticle",
+            headline: TITLE,
+            description: DESCRIPTION,
+            path: "/docs",
+            published: "2026-10-04",
+            modified: "2026-11-09",
+          }),
+          breadcrumbs([
+            { name: "Moneta", path: "/" },
+            { name: "Docs", path: "/docs" },
+          ]),
+        ]}
+      />
       <PageHeader
         eyebrow={<Eyebrow className="w-fit">Docs</Eyebrow>}
         title="How Moneta Works."
@@ -308,7 +333,7 @@ TWAP = ∫ observation dt over [tradingStart, tradingEnd] ÷ duration`}
                 name,
                 role,
                 deployment && key ? (
-                  <AddressChip key={name} address={deployment[key] as string} />
+                  <ServerAddressChip key={name} address={deployment[key] as string} />
                 ) : (
                   "Not deployed"
                 ),
