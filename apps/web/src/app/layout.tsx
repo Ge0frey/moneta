@@ -1,10 +1,19 @@
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Metadata, Viewport } from "next";
 import { GeistSans } from "geist/font/sans";
 import { IBM_Plex_Mono } from "next/font/google";
 import type { ReactNode } from "react";
 import { Footer, HelpButton } from "@/components/layout/Footer";
-import { Nav } from "@/components/layout/Nav";
-import { Providers } from "./providers";
+import { DEFAULT_OG_IMAGE } from "@/lib/seo";
+import {
+  CARD_TITLE,
+  HOME_DESCRIPTION,
+  HOME_TITLE,
+  SITE_NAME,
+  SITE_URL,
+  X_HANDLE,
+} from "@/lib/site";
 import "./globals.css";
 
 const plexMono = IBM_Plex_Mono({
@@ -14,44 +23,40 @@ const plexMono = IBM_Plex_Mono({
   display: "swap",
 });
 
-const SITE_URL = "https://www.monetafutarchy.xyz";
-const TITLE = "Moneta — Raise In Public. Spend By Verdict.";
-const DESCRIPTION =
-  "Permissionless futarchy capital formation on Monad. Every dollar leaves a project's treasury only when the market says it creates value.";
-
-/** Link-preview card: 1200 × 628 (1.91:1) rendered at 2×, for X's summary_large_image and Open Graph. */
-const SOCIAL_IMAGE = {
-  url: "/og.png",
-  width: 2400,
-  height: 1256,
-  alt: "Moneta — Raise In Public. Spend By Verdict. Permissionless futarchy on Monad.",
-};
-
+/**
+ * Site-wide defaults only. Every page sets its own title, description, canonical and cards through
+ * `pageMetadata()` (lib/seo.ts); nothing here may carry a page-specific value such as a canonical URL,
+ * because any page that forgot to override it would inherit it.
+ */
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: { default: TITLE, template: "%s · Moneta" },
-  description: DESCRIPTION,
-  icons: { icon: "/icon.svg" },
+  title: { default: HOME_TITLE, template: `%s · ${SITE_NAME}` },
+  description: HOME_DESCRIPTION,
+  applicationName: SITE_NAME,
   openGraph: {
     type: "website",
-    siteName: "Moneta",
+    siteName: SITE_NAME,
     locale: "en_US",
-    title: TITLE,
-    description: DESCRIPTION,
-    images: [SOCIAL_IMAGE],
+    title: CARD_TITLE,
+    description: HOME_DESCRIPTION,
+    images: [DEFAULT_OG_IMAGE],
   },
   twitter: {
     card: "summary_large_image",
-    site: "@monetaxyz",
-    creator: "@monetaxyz",
-    title: TITLE,
-    description: DESCRIPTION,
-    images: [SOCIAL_IMAGE],
+    site: X_HANDLE,
+    creator: X_HANDLE,
+    title: CARD_TITLE,
+    description: HOME_DESCRIPTION,
+    images: [DEFAULT_OG_IMAGE],
   },
 };
 
 export const viewport: Viewport = { themeColor: "#000000", colorScheme: "dark" };
 
+/**
+ * Root: document, fonts, footer. The nav and <main> live in the route-group layouts: (site) for
+ * marketing pages (no wallet stack), (app) for the app (wagmi + RainbowKit + React Query).
+ */
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={`${GeistSans.variable} ${plexMono.variable}`}>
@@ -62,14 +67,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         >
           Skip to content
         </a>
-        <Providers>
-          <Nav />
-          <main id="main" className="min-h-[calc(100dvh-56px)]">
-            {children}
-          </main>
-          <Footer />
-          <HelpButton />
-        </Providers>
+        {children}
+        <Footer />
+        <HelpButton />
+        {/* Cookieless traffic analytics and real-user Core Web Vitals (enable both in the Vercel project). */}
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );

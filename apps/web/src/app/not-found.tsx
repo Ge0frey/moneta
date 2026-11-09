@@ -1,36 +1,23 @@
-import Link from "next/link";
-import { AsciiField } from "@/components/art/AsciiField";
-import { Frame } from "@/components/layout/Frame";
-import { Button } from "@/components/ui/button";
-import { Eyebrow } from "@/components/ui/pills";
+import type { Metadata } from "next";
+import { LaunchApp } from "@/components/layout/LaunchApp";
+import { Nav } from "@/components/layout/Nav";
+import { NotFoundContent } from "@/components/layout/NotFoundContent";
+import { CHAIN } from "@/lib/env";
 
+export const metadata: Metadata = {
+  title: "Page Not Found",
+  description: "This page doesn't exist on Moneta.",
+  robots: { index: false, follow: true },
+};
+
+/** Root 404 (unmatched URLs). It renders outside both route groups, so it brings its own nav. */
 export default function NotFound() {
   return (
-    <Frame variant="narrative">
-      <section className="flex flex-col items-center gap-6 py-24 text-center">
-        <AsciiField
-          motif="fork"
-          className="h-[200px] w-full max-w-[420px]"
-          cell={9}
-          zoom={0.3}
-          density={0.026}
-          tilt={-0.12}
-        />
-        <Eyebrow>404</Eyebrow>
-        <h1 className="heading-xl">Nothing Priced Here.</h1>
-        <p className="body max-w-[48ch] text-fg-2">
-          This page doesn&apos;t exist on this network. The raise, treasury or proposal may live on
-          another chain, or the link is mistyped.
-        </p>
-        <div className="flex flex-wrap justify-center gap-3">
-          <Button asChild>
-            <Link href="/explore">Explore raises</Link>
-          </Button>
-          <Button asChild variant="secondary">
-            <Link href="/">Home</Link>
-          </Button>
-        </div>
-      </section>
-    </Frame>
+    <>
+      <Nav networkName={CHAIN.name} action={<LaunchApp />} mobileAction={<LaunchApp block />} />
+      <main id="main" className="min-h-[calc(100dvh-56px)]">
+        <NotFoundContent />
+      </main>
+    </>
   );
 }
