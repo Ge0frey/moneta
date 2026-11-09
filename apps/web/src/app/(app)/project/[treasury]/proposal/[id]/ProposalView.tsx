@@ -3,6 +3,7 @@
 import {
   actionTitle,
   big,
+  decodeAction,
   formatBps,
   formatDuration,
   formatScaledPrice,
@@ -33,12 +34,15 @@ import {
   Panel,
   PhaseTimeline,
 } from "@/components/ui/display";
-import { StatusChip, Tag } from "@/components/ui/pills";
+import { StatusChip, Tag, type StatusTone } from "@/components/ui/pills";
 import { ErrorState, Skeleton } from "@/components/ui/states";
 import { indexer } from "@/lib/env";
 import { useChainNow, useProjectState, useProposalState } from "@/lib/hooks/chain";
 import { INDEXER_POLL_MS } from "@/lib/hooks/indexed";
 import { useMonetaTx } from "@/lib/hooks/tx";
+import { projectHref } from "@/lib/listing";
+import { clampText, memoThesis } from "@/lib/seo";
+import type { ProjectDetail, ProposalDetail } from "@/lib/server/data";
 import { MarketPanel, PositionsPanel, TradePanel, TradesPanel } from "./trade";
 
 export function describeAction(a: ProposalAction, p: ProjectView): string {
@@ -76,7 +80,27 @@ const STATUS: Record<
   [ProposalStatus.Cancelled]: { tone: "muted", label: "Cancelled" },
 };
 
-export function ProposalView({ treasury, id }: { treasury: Address; id: bigint }) {
+/** Server-rendered indexer data for the first paint (what crawlers and link previews see). */
+export type ProposalInitial = { proposal: ProposalDetail | null; project: ProjectDetail | null };
+
+const INDEXED_STATUS: Record<ProposalDetail["status"], { tone: StatusTone; label: string }> = {
+  QUEUED: { tone: "warning", label: "Queued" },
+  ACTIVE: { tone: "live", label: "Live" },
+  PASSED: { tone: "pass", label: "Passed" },
+  EXECUTED: { tone: "pass", label: "Executed" },
+  FAILED: { tone: "fail", label: "Failed" },
+  CANCELLED: { tone: "muted", label: "Cancelled" },
+};
+
+export function ProposalView({
+  treasury,
+  id,
+  initial,
+}: {
+  treasury: Address;
+  id: bigint;
+  initial?: ProposalInitial;
+}) {
   const project = useProjectState(treasury);
   const chain = useProposalState(project.data, id);
   const tx = useMonetaTx();
@@ -85,6 +109,13 @@ export function ProposalView({ treasury, id }: { treasury: Address; id: bigint }
     queryKey: ["idx", "proposal", treasury, id.toString()],
     queryFn: () => indexer.proposal(treasury, id),
     refetchInterval: INDEXER_POLL_MS,
+    initialData: initial?.proposal ?? undefined,
+  });
+  const indexedProject = useQuery({
+    queryKey: ["idx", "project", treasury],
+    queryFn: () => indexer.project(treasury),
+    staleTime: 60_000,
+    initialData: initial?.project ?? undefined,
   });
   const passPts = useQuery({
     queryKey: ["idx", "points", chain.data?.proposal.passPoolId.toString()],
@@ -99,10 +130,18 @@ export function ProposalView({ treasury, id }: { treasury: Address; id: bigint }
     refetchInterval: INDEXER_POLL_MS,
   });
 
-  if (project.isError || chain.isError)
+  if ((project.isError || chain.isError) && !indexed.data)
     return <ErrorState className="mt-12" title="Proposal not found" />;
   if (!project.data || !chain.data)
-    return <Skeleton className="mt-12 h-[560px] w-full rounded-[16px]" />;
+    return indexed.data ? (
+      <ProposalSummary
+        treasury={treasury}
+        proposal={indexed.data}
+        projectName={indexedProject.data?.name}
+      />
+    ) : (
+      <Skeleton className="mt-12 h-[560px] w-full rounded-[16px]" />
+    );
 
   const p = project.data;
   const v = chain.data;
@@ -162,7 +201,7 @@ export function ProposalView({ treasury, id }: { treasury: Address; id: bigint }
           <span className="flex flex-col gap-2">
             <span>{describeAction(v.action, p)}</span>
             <span className="inline-flex flex-wrap items-center gap-3">
-              <Link href={`/project/${treasury}`} className="mono-xs text-fg-2 hover:text-fg">
+              <Link href={projectHref(treasury)} className="mono-xs text-fg-2 hover:text-fg">
                 ← {p.tokenMeta.name}
               </Link>
               <AddressChip address={pr.proposer} label="Proposer" />
@@ -311,6 +350,105 @@ export function ProposalView({ treasury, id }: { treasury: Address; id: bigint }
             </aside>
           </div>
         )}
+      </Section>
+    </>
+  );
+}
+
+/**
+ * First paint from the indexer, before the chain reads land: the action, status, verdict figures and the
+ * full memo. Live projections, the chart and the trade panels replace it once the chain read arrives.
+ */
+function ProposalSummary({
+  treasury,
+  proposal: pr,
+  projectName,
+}: {
+  treasury: Address;
+  proposal: ProposalDetail;
+  projectName?: string;
+}) {
+  const status = INDEXED_STATUS[pr.status];
+  let title = "Proposal";
+  try {
+    title = actionTitle(decodeAction(pr.actionType, pr.actionData));
+  } catch {}
+  const thesis = memoThesis(pr.memo);
+  const decided = pr.status === "PASSED" || pr.status === "EXECUTED" || pr.status === "FAILED";
+  return (
+    <>
+      <PageHeader
+        eyebrow={
+          <div className="flex flex-wrap items-center gap-2">
+            <StatusChip
+              tone={status.tone}
+              label={
+                pr.executionFailed && pr.status === "PASSED"
+                  ? "Passed · execution failed"
+                  : status.label
+              }
+              pulse={pr.status === "ACTIVE"}
+            />
+            <Tag>#{pr.proposalId}</Tag>
+            <Tag>
+              {pr.isTeam ? "Team" : "Community"} · threshold{" "}
+              {formatBps(pr.thetaBps, { signed: true })}
+            </Tag>
+          </div>
+        }
+        title={title}
+        sub={
+          <span className="flex flex-col gap-2">
+            {thesis && <span>{clampText(thesis, 240)}</span>}
+            <span className="inline-flex flex-wrap items-center gap-3">
+              <Link href={projectHref(treasury)} className="mono-xs text-fg-2 hover:text-fg">
+                ← {projectName ?? "Project"}
+              </Link>
+              <AddressChip address={pr.proposer} label="Proposer" />
+            </span>
+          </span>
+        }
+      />
+      <Section dense className="pb-24">
+        <div className="grid gap-4 lg:grid-cols-4">
+          <div className="flex flex-col gap-4 lg:col-span-3">
+            <Panel>
+              <div className="grid gap-6 sm:grid-cols-3">
+                <div>
+                  <p className="mono-xs text-fg-3 uppercase">Verdict</p>
+                  <p className="figure-xl mt-2">
+                    {decided ? (pr.passed ? "▲ PASS" : "▼ FAIL") : status.label}
+                  </p>
+                  <p className="mono-xs mt-2 text-fg-3">
+                    needs {formatBps(pr.thetaBps, { signed: true })} over FAIL
+                  </p>
+                </div>
+                <div>
+                  <p className="mono-xs text-fg-3 uppercase">TWAP · PASS / FAIL</p>
+                  <p className="figure-lg mt-2">
+                    {pr.twapPass ? formatScaledPrice(big(pr.twapPass)) : "—"}
+                  </p>
+                  <p className="figure-lg text-fg-2">
+                    {pr.twapFail ? formatScaledPrice(big(pr.twapFail)) : "—"}
+                  </p>
+                </div>
+                <div>
+                  <p className="mono-xs text-fg-3 uppercase">Volume</p>
+                  <p className="figure-lg mt-2">
+                    {formatUsd(big(pr.volumeQuote), 6, { compact: true })}
+                  </p>
+                  <p className="mono-xs mt-1 text-fg-3">{pr.tradeCount} trades</p>
+                </div>
+              </div>
+            </Panel>
+            <Panel title="Proposal memo">
+              <Memo text={pr.memo || "_No memo._"} hash={pr.memoHash} />
+            </Panel>
+          </div>
+          <aside className="flex flex-col gap-4">
+            <Skeleton className="h-[320px] w-full rounded-[16px]" />
+          </aside>
+        </div>
       </Section>
     </>
   );

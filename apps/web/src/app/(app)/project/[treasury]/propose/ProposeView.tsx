@@ -38,7 +38,7 @@ import { MemoEditor } from "@/components/ui/memo-editor";
 import { Eyebrow, Tag } from "@/components/ui/pills";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/states";
 import { QuoteFaucet } from "@/components/tx/QuoteFaucet";
-import { quoteSym, requireDeployment } from "@/lib/env";
+import { indexer, quoteSym, requireDeployment } from "@/lib/env";
 import { useBalances, useFactoryState, useProjectState } from "@/lib/hooks/chain";
 import { useMonetaTx } from "@/lib/hooks/tx";
 import { describeAction } from "../proposal/[id]/ProposalView";
@@ -48,6 +48,7 @@ import {
   thresholdCopy,
   toCfgInput,
 } from "@/components/governance/ConfigEditor";
+import { projectHref, proposalHref } from "@/lib/listing";
 
 type Kind = ProposalAction["type"];
 
@@ -106,7 +107,7 @@ export function ProposeView({ treasury }: { treasury: Address }) {
         body="Holders voted to wind down, so there's nothing left to propose. Remaining holders can redeem at NAV."
         action={
           <Button asChild variant="tertiary">
-            <Link href={`/project/${treasury}`}>Back to project</Link>
+            <Link href={projectHref(treasury)}>Back to project</Link>
           </Button>
         }
       />
@@ -321,14 +322,16 @@ function Composer({ project: p, bounds }: { project: ProjectView; bounds: Bounds
         try {
           const ev = decodeEventLog({ abi: treasuryAbi, data: log.data, topics: log.topics });
           if (ev.eventName === "ProposalCreated") {
-            router.push(`/project/${p.treasury}/proposal/${(ev.args as { id: bigint }).id}`);
+            // Let the indexer catch up so the proposal page's first server render has its real card.
+            await indexer.waitForBlock(receipt.blockNumber, 8_000, 500).catch(() => false);
+            router.push(proposalHref(p.treasury, (ev.args as { id: bigint }).id));
             return;
           }
         } catch {
           /* logs from other contracts */
         }
       }
-      router.push(`/project/${p.treasury}`);
+      router.push(projectHref(p.treasury));
     } finally {
       setBusy(false);
     }
@@ -357,7 +360,7 @@ function Composer({ project: p, bounds }: { project: ProjectView; bounds: Bounds
         sub={`Propose a change to ${p.tokenMeta.name}'s treasury. Two markets open, one for each world, and the verdict follows whichever one prices ${sym} higher.`}
         actions={
           <Button asChild variant="tertiary">
-            <Link href={`/project/${p.treasury}`}>Cancel</Link>
+            <Link href={projectHref(p.treasury)}>Cancel</Link>
           </Button>
         }
       />
