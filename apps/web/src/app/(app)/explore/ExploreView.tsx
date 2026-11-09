@@ -1,34 +1,33 @@
 "use client";
 
+import type { IndexedProject, IndexedRaise } from "@moneta/sdk";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMemo } from "react";
 import { Section } from "@/components/layout/Frame";
 import { Button } from "@/components/ui/button";
 import { ProjectCard } from "@/components/ui/cards";
-import { PageHeader } from "@/components/ui/display";
-import { Chip, Eyebrow } from "@/components/ui/pills";
+import { Chip } from "@/components/ui/pills";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/states";
 import { useProjects, useRaises } from "@/lib/hooks/indexed";
-import { buildListings, STATUS_META, type ListingStatus } from "@/lib/listing";
+import { buildListings, EXPLORE_FILTERS, STATUS_META } from "@/lib/listing";
 
-const FILTERS: ("all" | ListingStatus)[] = [
-  "all",
-  "raising",
-  "governing",
-  "verdict",
-  "redeemed",
-  "refunding",
-];
-
-export function ExploreView() {
+/**
+ * Interactive Explore: filters and search from the URL. The page header and the unfiltered list are
+ * server-rendered by page.tsx (this view needs useSearchParams, so it only renders in the browser).
+ */
+export function ExploreView({
+  initial,
+}: {
+  initial?: { raises: IndexedRaise[]; projects: IndexedProject[] };
+}) {
   const params = useSearchParams();
   const router = useRouter();
   const path = usePathname();
-  const status = (params.get("status") ?? "all") as (typeof FILTERS)[number];
+  const status = (params.get("status") ?? "all") as (typeof EXPLORE_FILTERS)[number];
   const q = (params.get("q") ?? "").trim().toLowerCase();
-  const raises = useRaises();
-  const projects = useProjects();
+  const raises = useRaises(initial?.raises);
+  const projects = useProjects(initial?.projects);
 
   const listings = useMemo(() => {
     let l = buildListings(raises.data, projects.data);
@@ -56,29 +55,16 @@ export function ExploreView() {
 
   return (
     <>
-      <PageHeader
-        eyebrow={<Eyebrow className="w-fit">Explore</Eyebrow>}
-        title="Explore Raises"
-        sub={
-          q ? (
-            <span>
-              Results for <span className="text-fg">“{q}”</span> ·{" "}
-              <Link href="/explore" className="underline underline-offset-2">
-                clear
-              </Link>
-            </span>
-          ) : (
-            "Every Moneta raise and the market-governed treasuries they launched."
-          )
-        }
-        actions={
-          <Button asChild>
-            <Link href="/create">Create a Raise</Link>
-          </Button>
-        }
-      />
+      {q && (
+        <p className="body -mt-6 pb-6 text-fg-2">
+          Results for <span className="text-fg">“{q}”</span> ·{" "}
+          <Link href="/explore" className="underline underline-offset-2">
+            clear
+          </Link>
+        </p>
+      )}
       <div className="-ml-1 flex flex-wrap gap-2 pb-6" role="group" aria-label="Filter by status">
-        {FILTERS.map((f) => (
+        {EXPLORE_FILTERS.map((f) => (
           <Chip key={f} active={status === f} onClick={() => setStatus(f)}>
             {f === "all" ? "All" : STATUS_META[f].filter}
           </Chip>

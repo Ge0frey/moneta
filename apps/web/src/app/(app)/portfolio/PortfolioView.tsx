@@ -36,6 +36,7 @@ import { useBalances } from "@/lib/hooks/chain";
 import { INDEXER_POLL_MS } from "@/lib/hooks/indexed";
 import { useMounted } from "@/lib/hooks/mounted";
 import { useMonetaTx } from "@/lib/hooks/tx";
+import { projectHref, proposalHref, raiseHref } from "@/lib/listing";
 
 const TABS = [
   { id: "contributions", label: "Contributions" },
@@ -303,7 +304,7 @@ function Contributions({ rows, account }: { rows: Contribution[]; account: Addre
         return (
           <tr key={r.raise_id} className="border-t border-line-strong">
             <td className="py-3 pr-3">
-              <Link href={`/raise/${r.raise_id}`} className="body-sm text-fg hover:underline">
+              <Link href={raiseHref(r.raise_id)} className="body-sm text-fg hover:underline">
                 {r.raise.name}
               </Link>
               <p className="mono-xs text-fg-3">${r.raise.symbol}</p>
@@ -348,7 +349,7 @@ function Contributions({ rows, account }: { rows: Contribution[]; account: Addre
                 </Button>
               ) : r.raise.treasury ? (
                 <Button asChild size="sm" variant="ghost">
-                  <Link href={`/project/${r.raise.treasury}`}>Project →</Link>
+                  <Link href={projectHref(r.raise.treasury)}>Project →</Link>
                 </Button>
               ) : null}
             </td>
@@ -422,7 +423,7 @@ function Positions({
           <tr key={pr.id} className="border-t border-line-strong">
             <td className="py-3 pr-3">
               <Link
-                href={`/project/${pr.project.treasury}/proposal/${pr.proposalId}`}
+                href={proposalHref(pr.project.treasury, pr.proposalId)}
                 className="body-sm text-fg hover:underline"
               >
                 {title}
@@ -460,9 +461,7 @@ function Positions({
                 </Button>
               ) : (
                 <Button asChild size="sm" variant="ghost">
-                  <Link href={`/project/${pr.project.treasury}/proposal/${pr.proposalId}`}>
-                    Trade →
-                  </Link>
+                  <Link href={proposalHref(pr.project.treasury, pr.proposalId)}>Trade →</Link>
                 </Button>
               )}
             </td>
@@ -502,7 +501,7 @@ function Tokens({ rows, account }: { rows: Holding[]; account: Address }) {
           <tr key={h.project.token} className="border-t border-line-strong">
             <td className="py-3 pr-3">
               <Link
-                href={`/project/${h.project.treasury}`}
+                href={projectHref(h.project.treasury)}
                 className="body-sm text-fg hover:underline"
               >
                 {h.project.name}
@@ -518,7 +517,7 @@ function Tokens({ rows, account }: { rows: Holding[]; account: Address }) {
             </td>
             <td className="py-3 pl-3 text-right">
               <Button asChild size="sm" variant="ghost">
-                <Link href={`/project/${h.project.treasury}`}>Trade →</Link>
+                <Link href={projectHref(h.project.treasury)}>Trade →</Link>
               </Button>
             </td>
           </tr>
@@ -562,7 +561,7 @@ function Redemptions({ rows, account }: { rows: Holding[]; account: Address }) {
           <tr key={h.project.token} className="border-t border-line-strong">
             <td className="py-3 pr-3">
               <Link
-                href={`/project/${h.project.treasury}`}
+                href={projectHref(h.project.treasury)}
                 className="body-sm text-fg hover:underline"
               >
                 {h.project.name}

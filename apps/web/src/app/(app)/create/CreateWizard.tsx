@@ -21,13 +21,12 @@ import { decodeEventLog, type Address, type PublicClient } from "viem";
 import { usePublicClient } from "wagmi";
 import { Section } from "@/components/layout/Frame";
 import { Button } from "@/components/ui/button";
-import { KV, PageHeader, Panel } from "@/components/ui/display";
+import { KV, Panel } from "@/components/ui/display";
 import { Field, Input, Segmented } from "@/components/ui/forms";
 import { MemoEditor } from "@/components/ui/memo-editor";
-import { Eyebrow } from "@/components/ui/pills";
 import { ErrorState, Skeleton } from "@/components/ui/states";
 import { cn } from "@/lib/cn";
-import { IS_TESTNET, quoteSym, requireDeployment } from "@/lib/env";
+import { indexer, IS_TESTNET, quoteSym, requireDeployment } from "@/lib/env";
 import { useFactoryState } from "@/lib/hooks/chain";
 import { useMonetaTx } from "@/lib/hooks/tx";
 import { ConfigEditor } from "@/components/governance/ConfigEditor";
@@ -42,19 +41,19 @@ import {
   type Draft,
   type Unit,
 } from "@/lib/raise-form";
+import { raiseHref } from "@/lib/listing";
 
 export function CreateWizard() {
   const factory = useFactoryState();
   if (factory.isError)
     return (
       <ErrorState
-        className="mt-12"
         title="Couldn't reach the Moneta factory"
         body="Check your network connection and that Moneta is deployed on this chain."
         onRetry={() => factory.refetch()}
       />
     );
-  if (!factory.data) return <Skeleton className="mt-12 h-[640px] w-full rounded-[16px]" />;
+  if (!factory.data) return <Skeleton className="h-[640px] w-full rounded-[16px]" />;
   return <Wizard factory={factory.data} />;
 }
 
@@ -113,7 +112,10 @@ function Wizard({ factory }: { factory: FactoryState }) {
         try {
           const ev = decodeEventLog({ abi: monetaFactoryAbi, data: log.data, topics: log.topics });
           if (ev.eventName === "RaiseCreated") {
-            router.push(`/raise/${(ev.args as { raise: Address }).raise}`);
+            // Let the indexer catch up first, so the raise page's first server render (the one a founder
+            // shares straight away) has its real title and share card.
+            await indexer.waitForBlock(receipt.blockNumber, 8_000, 500).catch(() => false);
+            router.push(raiseHref((ev.args as { raise: Address }).raise));
             return;
           }
         } catch {
@@ -138,11 +140,6 @@ function Wizard({ factory }: { factory: FactoryState }) {
 
   return (
     <>
-      <PageHeader
-        eyebrow={<Eyebrow className="w-fit">Create a Raise</Eyebrow>}
-        title="Raise with markets, not promises."
-        sub="Anyone can open a raise. Backers get one price, a full refund below your minimum, and a treasury that only pays out when markets expect it to raise the token's value."
-      />
       <Section dense className="pb-24">
         {factory.creationPaused && (
           <ErrorState
