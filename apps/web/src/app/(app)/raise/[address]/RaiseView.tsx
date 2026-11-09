@@ -10,11 +10,12 @@ import {
   shortAddress,
   tokensForQuote,
   txs,
+  type RaiseState,
 } from "@moneta/sdk";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useState } from "react";
-import { parseUnits, type Address } from "viem";
+import { parseUnits, zeroAddress, type Address } from "viem";
 import { Section } from "@/components/layout/Frame";
 import { WalletButton } from "@/components/layout/Wallet";
 import { Button } from "@/components/ui/button";
@@ -35,14 +36,64 @@ import { indexer, quoteSym } from "@/lib/env";
 import { useChainNow, useRaiseState } from "@/lib/hooks/chain";
 import { INDEXER_POLL_MS } from "@/lib/hooks/indexed";
 import { useMonetaTx } from "@/lib/hooks/tx";
+import type { RaiseDetail } from "@/lib/server/data";
+import { projectHref } from "@/lib/listing";
 
-export function RaiseView({ address }: { address: Address }) {
+const INDEXED_STATUS = {
+  OPEN: RaiseStatus.Open,
+  FAILED: RaiseStatus.Failed,
+  SUCCEEDED: RaiseStatus.Succeeded,
+} as const;
+
+/**
+ * Display-only stand-in for the chain read, built from the indexer row the server rendered with. It fills
+ * the first paint (and what crawlers and link previews see); the chain read replaces it on the client.
+ * Fields the indexer doesn't carry are zero and their rows are hidden until `live`.
+ */
+function raiseFromIndex(m: RaiseDetail): RaiseState {
+  return {
+    address: m.address as Address,
+    raiseId: BigInt(m.raiseId),
+    quote: m.quote as Address,
+    founder: m.founder_id as Address,
+    price: BigInt(m.price),
+    minRaise: BigInt(m.minRaise),
+    maxRaise: BigInt(m.maxRaise),
+    start: Number(m.start),
+    end: Number(m.end),
+    finalizeGrace: 0,
+    liquidityBps: m.liquidityBps,
+    feeBps: 0,
+    status: INDEXED_STATUS[m.status],
+    totalContributed: BigInt(m.totalContributed),
+    contributorCount: BigInt(m.contributorCount),
+    accepted: BigInt(m.accepted),
+    contributorTokens: 0n,
+    token: (m.token ?? zeroAddress) as Address,
+    treasury: (m.treasury ?? zeroAddress) as Address,
+  };
+}
+
+/** "Nov 12, 2026, 14:00 UTC": the same string on the server and in every browser (no hydration drift). */
+const utcStamp = (s: number) =>
+  `${new Date(s * 1000).toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+    timeZone: "UTC",
+  })} UTC`;
+
+export function RaiseView({ address, initial }: { address: Address; initial?: RaiseDetail }) {
   const tx = useMonetaTx();
   const chain = useRaiseState(address, tx.address);
   const indexed = useQuery({
     queryKey: ["idx", "raise", address],
     queryFn: () => indexer.raise(address),
     refetchInterval: INDEXER_POLL_MS,
+    initialData: initial,
   });
   const founder = useQuery({
     queryKey: ["idx", "founder", indexed.data?.founder_id],
@@ -50,8 +101,9 @@ export function RaiseView({ address }: { address: Address }) {
     queryFn: () => indexer.founderHistory(indexed.data!.founder_id),
   });
   const now = useChainNow();
+  const meta = indexed.data ?? undefined;
 
-  if (chain.isError)
+  if (chain.isError && !meta)
     return (
       <ErrorState
         className="mt-12"
@@ -59,10 +111,9 @@ export function RaiseView({ address }: { address: Address }) {
         body="This address isn't a Moneta raise on this network."
       />
     );
-  if (!chain.data) return <Skeleton className="mt-12 h-[480px] w-full rounded-[16px]" />;
-
-  const r = chain.data;
-  const meta = indexed.data;
+  const live = !!chain.data;
+  const r = chain.data ?? (meta ? raiseFromIndex(meta) : undefined);
+  if (!r) return <Skeleton className="mt-12 h-[480px] w-full rounded-[16px]" />;
   const ended = now !== undefined && now >= r.end;
   const graceOver = now !== undefined && now >= r.end + r.finalizeGrace;
   const statusChip =
@@ -98,7 +149,7 @@ export function RaiseView({ address }: { address: Address }) {
         actions={
           r.status === RaiseStatus.Succeeded ? (
             <Button asChild>
-              <Link href={`/project/${r.treasury}`}>Go to project →</Link>
+              <Link href={projectHref(r.treasury)}>Go to project →</Link>
             </Button>
           ) : undefined
         }
@@ -124,13 +175,17 @@ export function RaiseView({ address }: { address: Address }) {
                   ["Maximum", `${formatUsd(r.maxRaise)} — above this, pro-rata refunds`],
                   [
                     "Window",
-                    `${new Date(r.start * 1000).toLocaleString()} → ${new Date(r.end * 1000).toLocaleString()}`,
+                    live
+                      ? `${new Date(r.start * 1000).toLocaleString()} → ${new Date(r.end * 1000).toLocaleString()}`
+                      : `${utcStamp(r.start)} → ${utcStamp(r.end)}`,
                   ],
                   [
                     "Liquidity seeded",
                     `${formatBps(r.liquidityBps)} of the net raise, at the raise price`,
                   ],
-                  ["Protocol fee", formatBps(r.feeBps, { digits: 1 })],
+                  ...(live
+                    ? ([["Protocol fee", formatBps(r.feeBps, { digits: 1 })]] as [string, string][])
+                    : []),
                   ...(meta
                     ? ([
                         [
@@ -182,7 +237,9 @@ export function RaiseView({ address }: { address: Address }) {
                         <span className="mono-xs text-fg-2">{shortAddress(e.account)}</span>
                         <span className="tabular">+{formatUsd(BigInt(e.amount))}</span>
                         <span className="mono-xs hidden text-fg-3 sm:inline">
-                          {new Date(Number(e.timestamp) * 1000).toLocaleTimeString()}
+                          {live
+                            ? new Date(Number(e.timestamp) * 1000).toLocaleTimeString()
+                            : utcStamp(Number(e.timestamp))}
                         </span>
                       </li>
                     ))}
@@ -203,12 +260,16 @@ export function RaiseView({ address }: { address: Address }) {
                     <p className="mono-xs mt-1 text-fg-3">backers</p>
                   </div>
                 </div>
-                <RaiseActions
-                  address={address}
-                  ended={ended}
-                  graceOver={graceOver}
-                  symbol={meta?.symbol ?? "tokens"}
-                />
+                {live ? (
+                  <RaiseActions
+                    address={address}
+                    ended={ended}
+                    graceOver={graceOver}
+                    symbol={meta?.symbol ?? "tokens"}
+                  />
+                ) : (
+                  <Skeleton className="h-28 w-full" />
+                )}
               </div>
             </Panel>
           </aside>

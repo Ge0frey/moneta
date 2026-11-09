@@ -22,6 +22,7 @@ import { ErrorState, Skeleton } from "@/components/ui/states";
 import { CHAIN, CHAIN_ID, deployment, INDEXER_URL } from "@/lib/env";
 import { useActiveProposals, useIndexerMeta, useProtocolStats } from "@/lib/hooks/indexed";
 import { useChainNow, useFactoryState } from "@/lib/hooks/chain";
+import { proposalHref } from "@/lib/listing";
 
 /** Liveness thresholds: indexer > 20 blocks behind warns, > 200 is critical; finalize overdue after 60s. */
 const LAG_WARN = 20;
@@ -187,7 +188,7 @@ export function StatusView() {
                       >
                         <div>
                           <Link
-                            href={`/project/${p.project.treasury}/proposal/${p.proposalId}`}
+                            href={proposalHref(p.project.treasury, p.proposalId)}
                             className="body-sm text-fg hover:underline"
                           >
                             {title}
