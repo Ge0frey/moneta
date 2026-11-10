@@ -112,8 +112,8 @@ export function Hero() {
       <div className="relative z-[2] flex flex-col gap-7">
         <h1 className="display-xl animate-rise max-w-[11ch]">Raise In Public. Spend By Verdict.</h1>
         <p className="body-lg animate-rise max-w-[42ch] text-fg" style={delay(0.1)}>
-          Moneta is permissionless futarchy capital formation on Monad. Every dollar leaves a
-          project&apos;s treasury only when the market says it creates value.
+          Moneta is futarchy fundraising on Monad. Founders raise in public, and every dollar leaves
+          a project&apos;s treasury only when the market says it creates value.
         </p>
         <div className="animate-rise flex flex-wrap gap-3" style={delay(0.2)}>
           <Button asChild size="lg">

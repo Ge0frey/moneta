@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { LiveDot } from "@/components/ui/pills";
 import { cn } from "@/lib/cn";
+import { GITHUB_URL } from "@/lib/site";
 import { SectionHead } from "./SectionHead";
 
 /* ── IV. Roadmap: one row per phase, read across the frame ──────────────────── */
@@ -120,13 +121,26 @@ export function ClosingCard() {
     <div className="dither relative overflow-hidden rounded-[24px] border border-line-subtle p-8 md:p-16">
       <h2 className="display-lg">Build With Us</h2>
       <p className="body mt-6 max-w-[56ch] text-fg">
-        Moneta is open source and permissionless. Fork it, integrate it, or launch the next Monad
-        project on it.
+        Moneta is{" "}
+        <a href={GITHUB_URL} rel="noopener" className="underline underline-offset-4">
+          open source
+        </a>{" "}
+        and permissionless. Fork it, integrate it, or launch the next Monad project on it.
       </p>
       <div className="mt-10 flex flex-wrap items-center gap-6">
         <Link href="/docs" className="body-sm text-fg underline-offset-4 hover:underline">
           Docs
         </Link>
+        <Link href="/founders" className="body-sm text-fg underline-offset-4 hover:underline">
+          Founder guide
+        </Link>
+        <a
+          href={GITHUB_URL}
+          rel="noopener"
+          className="body-sm text-fg underline-offset-4 hover:underline"
+        >
+          GitHub ↗
+        </a>
         <Link
           href="/docs#architecture"
           className="body-sm text-fg underline-offset-4 hover:underline"
