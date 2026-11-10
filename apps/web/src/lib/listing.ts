@@ -1,5 +1,16 @@
 import type { IndexedProject, IndexedRaise } from "@moneta/sdk";
 import type { StatusTone } from "@/components/ui/pills";
+import { isHidden } from "./hidden";
+
+/**
+ * Canonical URLs for on-chain pages. Addresses are always lowercase: the indexer stores lowercase ids
+ * and chain reads return checksummed ones, so building links ad hoc produced two URLs per page.
+ */
+export const raiseHref = (raise: string) => `/raise/${raise.toLowerCase()}`;
+export const projectHref = (treasury: string) => `/project/${treasury.toLowerCase()}`;
+export const proposalHref = (treasury: string, id: bigint | number | string) =>
+  `/project/${treasury.toLowerCase()}/proposal/${id.toString()}`;
+export const proposeHref = (treasury: string) => `/project/${treasury.toLowerCase()}/propose`;
 
 /** A raise joined with its launched project — the unit shown on Explore and the landing carousel. */
 export type Listing = {
@@ -9,6 +20,16 @@ export type Listing = {
 };
 
 export type ListingStatus = "raising" | "refunding" | "governing" | "verdict" | "redeemed";
+
+/** Explore's status filters, in display order. */
+export const EXPLORE_FILTERS: ("all" | ListingStatus)[] = [
+  "all",
+  "raising",
+  "governing",
+  "verdict",
+  "redeemed",
+  "refunding",
+];
 
 export const STATUS_META: Record<
   ListingStatus,
@@ -26,7 +47,8 @@ export function buildListings(
   projects: IndexedProject[] = [],
 ): Listing[] {
   const byRaise = new Map(projects.map((p) => [p.raise_id, p]));
-  return raises.map((raise) => {
+  const visible = raises.filter((r) => !isHidden(r.address) && !isHidden(r.treasury));
+  return visible.map((raise) => {
     const project = byRaise.get(raise.id);
     let status: ListingStatus = "raising";
     if (raise.status === "FAILED") status = "refunding";
@@ -50,6 +72,6 @@ export function memoSummary(memo: string, max = 140): string {
 }
 
 export function listingHref(l: Listing): string {
-  if (l.raise.status === "SUCCEEDED" && l.project) return `/project/${l.project.treasury}`;
-  return `/raise/${l.raise.address}`;
+  if (l.raise.status === "SUCCEEDED" && l.project) return projectHref(l.project.treasury);
+  return raiseHref(l.raise.address);
 }

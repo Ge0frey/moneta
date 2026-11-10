@@ -1,5 +1,6 @@
 "use client";
 
+import type { IndexedProject, IndexedRaise } from "@moneta/sdk";
 import { useQuery } from "@tanstack/react-query";
 import { indexer } from "@/lib/env";
 
@@ -21,19 +22,22 @@ export function useProtocolStats() {
   });
 }
 
-export function useRaises() {
+/** `initial`: the server-rendered list, so the first paint matches the HTML crawlers saw. */
+export function useRaises(initial?: IndexedRaise[]) {
   return useQuery({
     queryKey: ["idx", "raises"],
     queryFn: () => indexer.raises({ limit: 200 }),
     refetchInterval: INDEXER_POLL_MS,
+    initialData: initial,
   });
 }
 
-export function useProjects() {
+export function useProjects(initial?: IndexedProject[]) {
   return useQuery({
     queryKey: ["idx", "projects"],
     queryFn: () => indexer.projects(200),
     refetchInterval: INDEXER_POLL_MS,
+    initialData: initial,
   });
 }
 
