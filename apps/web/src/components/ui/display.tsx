@@ -3,12 +3,14 @@
 import { explorerAddressUrl, formatCountdown, formatUsd, shortAddress } from "@moneta/sdk";
 import { Check, Copy } from "lucide-react";
 import { useState, type ReactNode } from "react";
-import ReactMarkdown from "react-markdown";
+import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { keccak256, toBytes } from "viem";
 import { cn } from "@/lib/cn";
 import { CHAIN_ID } from "@/lib/env";
 import { useChainNow } from "@/lib/hooks/chain";
+
+export { PageHeader } from "./page-header";
 
 /** Card/panel surface. */
 export function Panel({
@@ -197,6 +199,27 @@ export function PhaseTimeline({
   );
 }
 
+/**
+ * Memo Markdown is user-written content on our domain:
+ * - headings shift down two levels: the page's <h1> is the raise/proposal name and the panel title is an
+ *   <h2>, so a memo's "# Name" must not become a second <h1>;
+ * - links are marked user-generated (`ugc nofollow`) and open in a new tab, so a memo can't borrow the
+ *   site's reputation for its links (react-markdown already strips javascript: URLs).
+ */
+const MEMO_COMPONENTS: Components = {
+  h1: ({ children }) => <h3 className="md-h1">{children}</h3>,
+  h2: ({ children }) => <h4 className="md-h2">{children}</h4>,
+  h3: ({ children }) => <h5 className="md-h3">{children}</h5>,
+  h4: ({ children }) => <h6 className="md-h3">{children}</h6>,
+  h5: ({ children }) => <h6 className="md-h3">{children}</h6>,
+  h6: ({ children }) => <h6 className="md-h3">{children}</h6>,
+  a: ({ href, children }) => (
+    <a href={href} target="_blank" rel="ugc nofollow noopener noreferrer">
+      {children}
+    </a>
+  ),
+};
+
 /** Markdown memo rendered safely (no raw HTML) and verified against its on-chain hash. */
 export function Memo({ text, hash }: { text: string; hash?: string }) {
   const ok = hash ? keccak256(toBytes(text)).toLowerCase() === hash.toLowerCase() : undefined;
@@ -214,31 +237,10 @@ export function Memo({ text, hash }: { text: string; hash?: string }) {
         </p>
       )}
       <div className="memo">
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>{text}</ReactMarkdown>
+        <ReactMarkdown remarkPlugins={[remarkGfm]} components={MEMO_COMPONENTS}>
+          {text}
+        </ReactMarkdown>
       </div>
     </div>
-  );
-}
-
-export function PageHeader({
-  eyebrow,
-  title,
-  sub,
-  actions,
-}: {
-  eyebrow?: ReactNode;
-  title: ReactNode;
-  sub?: ReactNode;
-  actions?: ReactNode;
-}) {
-  return (
-    <header className="flex flex-col gap-4 pt-12 pb-10 lg:flex-row lg:items-end lg:justify-between">
-      <div className="flex flex-col gap-3">
-        {eyebrow}
-        <h1 className="heading-xl">{title}</h1>
-        {sub && <div className="body max-w-[60ch] text-fg-2">{sub}</div>}
-      </div>
-      {actions && <div className="flex flex-wrap gap-3">{actions}</div>}
-    </header>
   );
 }

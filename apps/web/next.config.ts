@@ -19,6 +19,11 @@ const config: NextConfig = {
   // WalletConnect pulls optional node-only deps; they are never used in the browser bundle.
   serverExternalPackages: ["pino-pretty", "lokijs", "encoding"],
   poweredByHeader: false,
+  // Share cards (opengraph-image routes) read these TTFs at runtime; make sure every function bundle has them.
+  outputFileTracingIncludes: {
+    "/*": ["./assets/fonts/**"],
+    "/**/*": ["./assets/fonts/**"],
+  },
   // RainbowKit → @wagmi/connectors (Base Account) → @coinbase/cdp-sdk statically imports optional x402 payment
   // packages Moneta never uses; alias them to a throwing stub instead of shipping unused dependencies.
   turbopack: {

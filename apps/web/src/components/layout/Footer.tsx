@@ -3,6 +3,7 @@ import { CircleHelp } from "lucide-react";
 import Link from "next/link";
 import { Wordmark } from "@/components/art/MonetaMark";
 import { CHAIN, CHAIN_ID, deployment, IS_TESTNET } from "@/lib/env";
+import { GITHUB_URL, X_URL } from "@/lib/site";
 
 type Item = { label: string; href: string; external?: boolean };
 
@@ -10,19 +11,32 @@ const COLUMNS: { title: string; items: Item[] }[] = [
   {
     title: "Protocol",
     items: [
-      { label: "Explore", href: "/explore" },
+      { label: "Explore raises", href: "/explore" },
       { label: "Create a raise", href: "/create" },
       { label: "Portfolio", href: "/portfolio" },
-      { label: "Docs", href: "/docs" },
+      { label: "How Moneta works", href: "/docs" },
+      { label: "Protocol status", href: "/status" },
     ],
   },
   {
-    title: "Resources",
+    title: "Learn",
     items: [
-      { label: "How verdicts work", href: "/docs#verdicts" },
-      { label: "Architecture", href: "/docs#architecture" },
-      { label: "Protocol status", href: "/status" },
+      { label: "What is futarchy?", href: "/learn/what-is-futarchy" },
+      { label: "Decision markets", href: "/learn/decision-markets" },
+      { label: "Futarchy vs token voting", href: "/learn/futarchy-vs-token-voting" },
+      { label: "Raise vs launchpad vs VC", href: "/learn/futarchy-raise-vs-launchpad" },
+      { label: "Glossary", href: "/glossary" },
+    ],
+  },
+  {
+    title: "Guides",
+    items: [
+      { label: "For founders", href: "/founders" },
+      { label: "For backers", href: "/backers" },
+      { label: "FAQ", href: "/faq" },
       { label: "Security model", href: "/docs#security" },
+      { label: "Risks", href: "/legal/risks" },
+      { label: "About", href: "/about" },
     ],
   },
   {
@@ -54,15 +68,21 @@ const COLUMNS: { title: string; items: Item[] }[] = [
 export function Footer() {
   return (
     <footer className="border-t border-line-subtle bg-surface-1">
-      <div className="mx-auto grid max-w-[1200px] gap-12 px-4 py-16 sm:px-6 lg:grid-cols-4 xl:px-0">
+      <div className="mx-auto grid max-w-[1200px] gap-12 px-4 py-16 sm:grid-cols-2 sm:px-6 lg:grid-cols-5 xl:px-0">
         <div className="flex flex-col gap-4">
           <Wordmark />
-          <p className="caption text-fg-3">
-            © 2026 Moneta · Permissionless futarchy capital formation
-          </p>
+          <p className="caption text-fg-3">© 2026 Moneta · Futarchy fundraising on Monad</p>
           <span className="inline-flex h-9 w-fit items-center rounded-[8px] border border-line px-3 body-sm text-fg-2">
             {CHAIN.name}
           </span>
+          <div className="flex gap-4">
+            <a href={X_URL} rel="me noopener" className="body-sm text-fg-2 hover:text-fg">
+              X ↗
+            </a>
+            <a href={GITHUB_URL} rel="me noopener" className="body-sm text-fg-2 hover:text-fg">
+              GitHub ↗
+            </a>
+          </div>
         </div>
         {COLUMNS.map((col) => (
           <nav key={col.title} aria-label={col.title} className="flex flex-col gap-3">

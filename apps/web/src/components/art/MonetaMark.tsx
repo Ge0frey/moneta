@@ -12,8 +12,8 @@ export function MonetaMark({
     <svg
       viewBox="0 0 24 24"
       className={cn("size-5", className)}
-      role="img"
-      aria-label={title}
+      // Decorative next to a visible name (title=""): hidden from assistive tech, not an unnamed image.
+      {...(title ? { role: "img", "aria-label": title } : { "aria-hidden": true })}
       fill="currentColor"
     >
       <path d="M12 2 22 7.5V9H2V7.5L12 2Z" />

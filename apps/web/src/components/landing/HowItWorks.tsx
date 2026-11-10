@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { ComponentType } from "react";
 import { BalanceGlyph, EscrowGlyph, ForkGlyph, SphereGlyph } from "@/components/art/Glyphs";
 import { cn } from "@/lib/cn";
@@ -44,6 +45,12 @@ export function HowItWorks() {
           A founder raises money in public. After that, a market decides how it&apos;s spent, not
           the founder.
         </p>
+        <Link
+          href="/learn/what-is-futarchy"
+          className="mono-sm w-fit text-fg-2 underline-offset-4 hover:text-fg hover:underline"
+        >
+          New to futarchy? Read the explainer →
+        </Link>
       </SectionHead>
 
       <ol className="grid border-y border-line sm:grid-cols-2 lg:grid-cols-4">

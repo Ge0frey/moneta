@@ -4,18 +4,23 @@ import { Menu, Search, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Dialog } from "radix-ui";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Wordmark } from "@/components/art/MonetaMark";
 import { LiveDot } from "@/components/ui/pills";
 import { cn } from "@/lib/cn";
-import { CHAIN } from "@/lib/env";
-import { WalletButton } from "./Wallet";
+
+/**
+ * The nav imports nothing from the wallet stack or the SDK: each route group's layout passes in the
+ * network name and the right-hand action (a "Launch app" pill on marketing pages, the wallet button
+ * inside the app). That keeps wagmi/RainbowKit/viem out of the marketing pages' JavaScript.
+ */
 
 const LINKS = [
   { href: "/explore", label: "Explore" },
   { href: "/create", label: "Create" },
   { href: "/portfolio", label: "Portfolio" },
   { href: "/docs", label: "Docs" },
+  { href: "/learn", label: "Learn" },
 ];
 
 function NavLink({ href, label, onClick }: { href: string; label: string; onClick?: () => void }) {
@@ -87,16 +92,26 @@ function SearchBox() {
   );
 }
 
-export function NetworkPill() {
+export function NetworkPill({ name }: { name: string }) {
   return (
     <span className="hidden h-8 items-center gap-2 rounded-full border border-line px-3 mono-xs text-fg-2 md:inline-flex">
       <LiveDot tone="pass" />
-      {CHAIN.name}
+      {name}
     </span>
   );
 }
 
-export function Nav() {
+export function Nav({
+  networkName,
+  action,
+  mobileAction,
+}: {
+  networkName: string;
+  /** Right-hand control: the wallet button in the app, a "Launch app" pill on marketing pages. */
+  action: ReactNode;
+  /** Full-width variant for the mobile menu. */
+  mobileAction: ReactNode;
+}) {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   useEffect(() => {
@@ -124,10 +139,8 @@ export function Nav() {
         </nav>
         <div className="ml-auto flex items-center gap-3">
           <SearchBox />
-          <NetworkPill />
-          <div className="hidden sm:block">
-            <WalletButton />
-          </div>
+          <NetworkPill name={networkName} />
+          <div className="hidden sm:block">{action}</div>
           <Dialog.Root open={open} onOpenChange={setOpen}>
             <Dialog.Trigger asChild>
               <button
@@ -162,9 +175,7 @@ export function Nav() {
                     </div>
                   ))}
                 </nav>
-                <div className="mt-4">
-                  <WalletButton block />
-                </div>
+                <div className="mt-4">{mobileAction}</div>
               </Dialog.Content>
             </Dialog.Portal>
           </Dialog.Root>

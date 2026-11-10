@@ -1,18 +1,21 @@
-"use client";
-
 import { big, formatUsd } from "@moneta/sdk";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
-import { useMemo, useRef, useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { ProjectCard } from "@/components/ui/cards";
-import { Chip, LiveDot } from "@/components/ui/pills";
-import { EmptyState, ErrorState, Skeleton } from "@/components/ui/states";
-import { deployment } from "@/lib/env";
-import { useProjects, useProtocolStats, useRaises } from "@/lib/hooks/indexed";
-import { buildListings, STATUS_META, type ListingStatus } from "@/lib/listing";
+import { LiveDot } from "@/components/ui/pills";
 import { cn } from "@/lib/cn";
+import { deployment } from "@/lib/env";
+import { getListings, getProtocol } from "@/lib/server/data";
+import { AutoRefresh } from "./AutoRefresh";
+import { LedgerCarousel } from "./LedgerCarousel";
 import { SectionHead } from "./SectionHead";
+
+/*
+ * Server-rendered: the figures and the project cards are in the landing page's HTML (real numbers, real
+ * links to every live raise), and the landing ships no SDK, viem or React Query. The page is ISR and
+ * AutoRefresh re-pulls it every minute while the tab is visible, so the figures stay current.
+ */
 
 /* ── Figures: one hairline row, one figure per frame column ────────────────── */
 function Figure({
@@ -42,10 +45,9 @@ function Figure({
   );
 }
 
-function Figures() {
-  const { data, isLoading, isError, refetch } = useProtocolStats();
-  if (isError) return <ErrorState body="The indexer is unreachable." onRetry={() => refetch()} />;
-  const v = (x: ReactNode) => (isLoading ? <Skeleton className="h-10 w-24" /> : x);
+async function Figures() {
+  const data = await getProtocol();
+  const v = (x: ReactNode) => (data ? x : "—");
   const passed = data?.verdictsPassed ?? 0;
   const failed = data?.verdictsFailed ?? 0;
   return (
@@ -78,97 +80,30 @@ function Figures() {
   );
 }
 
-/* ── Listings: filters + carousel ──────────────────────────────────────────── */
-const FILTERS: ("all" | ListingStatus)[] = ["all", "raising", "governing", "verdict", "redeemed"];
-
-function Listings() {
-  const raises = useRaises();
-  const projects = useProjects();
-  const [filter, setFilter] = useState<(typeof FILTERS)[number]>("all");
-  const track = useRef<HTMLUListElement>(null);
-  const listings = useMemo(
-    () => buildListings(raises.data, projects.data),
-    [raises.data, projects.data],
-  );
-  const shown = filter === "all" ? listings : listings.filter((l) => l.status === filter);
-
-  const scroll = (dir: 1 | -1) => {
-    const el = track.current;
-    if (!el) return;
-    el.scrollBy({ left: dir * Math.min(el.clientWidth, 380), behavior: "smooth" });
-  };
-
-  return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="-ml-1 flex gap-2 overflow-x-auto" role="group" aria-label="Filter projects">
-          {FILTERS.map((f) => (
-            <Chip key={f} active={filter === f} onClick={() => setFilter(f)}>
-              {f === "all" ? "All" : STATUS_META[f].filter}
-            </Chip>
-          ))}
-        </div>
-        <Link href="/explore" className="mono-sm text-fg-2 hover:text-fg">
-          View All Raises →
+async function Listings() {
+  const listings = await getListings();
+  if (!listings)
+    return (
+      <div className="rounded-[16px] border border-dashed border-line-strong px-6 py-14 text-center">
+        <p className="body text-fg-2">The indexer is unreachable right now.</p>
+        <Link href="/explore" className="mono-sm mt-3 inline-block text-fg hover:underline">
+          Try Explore →
         </Link>
       </div>
-
-      {raises.isError ? (
-        <ErrorState body="The indexer is unreachable." onRetry={() => raises.refetch()} />
-      ) : raises.isLoading ? (
-        <div className="grid gap-4 md:grid-cols-3">
-          {[0, 1, 2].map((i) => (
-            <Skeleton key={i} className="h-[260px] rounded-[16px]" />
-          ))}
-        </div>
-      ) : shown.length === 0 ? (
-        <EmptyState
-          className="border-dashed border-line-strong bg-transparent py-14"
-          title={
-            filter === "all"
-              ? "No raises yet"
-              : `Nothing ${STATUS_META[filter as ListingStatus].label.toLowerCase()} right now`
-          }
-          body="Moneta is permissionless — the first raise could be yours."
-          action={
-            <Button asChild variant="tertiary" size="sm">
-              <Link href="/create">Create a raise</Link>
-            </Button>
-          }
-        />
-      ) : (
-        <>
-          <ul
-            ref={track}
-            className="-mx-1 flex snap-x snap-mandatory gap-4 overflow-x-auto px-1 pb-2 [scrollbar-width:none]"
-          >
-            {shown.map((l) => (
-              <li key={l.raise.id} className="w-[min(340px,85vw)] shrink-0 snap-start">
-                <ProjectCard l={l} />
-              </li>
-            ))}
-          </ul>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => scroll(-1)}
-              aria-label="Previous projects"
-              className="grid size-10 place-items-center rounded-full border border-line bg-canvas text-fg hover:border-line-strong"
-            >
-              <ChevronLeft className="size-4" aria-hidden />
-            </button>
-            <button
-              type="button"
-              onClick={() => scroll(1)}
-              aria-label="Next projects"
-              className="grid size-10 place-items-center rounded-full bg-primary text-fg-inverse hover:bg-primary-hover"
-            >
-              <ChevronRight className="size-4" aria-hidden />
-            </button>
-          </div>
-        </>
-      )}
-    </div>
+    );
+  return (
+    <LedgerCarousel
+      items={listings.map((l) => ({
+        id: l.raise.id,
+        status: l.status,
+        card: <ProjectCard l={l} />,
+      }))}
+      createCta={
+        <Button asChild variant="tertiary" size="sm">
+          <Link href="/create">Create a raise</Link>
+        </Button>
+      }
+    />
   );
 }
 
@@ -176,6 +111,7 @@ function Listings() {
 export function Ledger() {
   return (
     <div className="flex flex-col gap-16">
+      <AutoRefresh everyMs={60_000} />
       <SectionHead n="V" label="Ledger" title="On the ledger.">
         <p className="body-lg text-fg-2">
           <LiveDot tone="live" className="mr-3 align-middle" />

@@ -1,6 +1,7 @@
 import { formatBps, formatDuration, type Bounds, type GovConfig } from "@moneta/sdk";
 import { isAddress, parseUnits, type Address } from "viem";
 import { fromCfgInput, toCfgInput, type CfgInput } from "./gov-config";
+import { MEMO_PLACEHOLDERS } from "./memo-template";
 
 /**
  * Create-raise wizard logic, kept free of React so it can be unit-tested against the contract rules
@@ -218,8 +219,7 @@ export function launchAt(
 }
 
 export function memoTemplate(d: Draft): string {
-  const rows = d.tranches
-    .map((t, i) => `| ${i + 1} | What ships before this unlocks | ${t}% |`)
-    .join("\n");
-  return `# ${d.name || "Project"}\n\n## Thesis\n\nWhat you're building, for whom, and why now.\n\n## Team\n\nWho is building it and what they've shipped before.\n\n## Milestones\n\n| Tranche | Deliverable | Share of treasury |\n|---|---|---|\n${rows}\n\n## Use of funds\n\nHow the streamed budget and each tranche will be spent.\n`;
+  const P = MEMO_PLACEHOLDERS;
+  const rows = d.tranches.map((t, i) => `| ${i + 1} | ${P.milestone} | ${t}% |`).join("\n");
+  return `# ${d.name || "Project"}\n\n## Thesis\n\n${P.thesis}\n\n## Team\n\n${P.team}\n\n## Milestones\n\n| Tranche | Deliverable | Share of treasury |\n|---|---|---|\n${rows}\n\n## Use of funds\n\n${P.funds}\n`;
 }

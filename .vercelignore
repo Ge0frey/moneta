@@ -18,3 +18,4 @@ apps/indexer/config.yaml
 test-results/
 playwright-report/
 .turbo/
+.claude/

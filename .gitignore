@@ -27,6 +27,9 @@ credentials.json
 service-account*.json
 docker-compose.override.yml
 .claude/settings.local.json
+# Claude Code runtime state (session ids, pids, scratch worktrees): machine-local, never shared
+.claude/*.lock
+.claude/worktrees/
 playwright/.auth/
 
 # Generated from deployments/*.json by scripts/gen-config.ts. On testnet it embeds MONAD_TESTNET_RPC_URL, which
